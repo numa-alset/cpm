@@ -1,11 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import '../database/fatora_db.dart';
-import '../database/fatora_products_db.dart';
-import '../database/payment_db.dart';
-import '../database/product_db.dart';
-import '../database/user_db.dart';
 import '../models/fatora.dart';
 import '../models/fatora_product.dart';
 import '../models/payment.dart';

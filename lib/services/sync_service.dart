@@ -75,18 +75,16 @@ class SyncService {
     }
   }
 
-  Future<void> syncFatoraProduct(FatoraProduct product) async {
-    final old = await fatoraProductsDB.get(product.unified);
+  Future<void> syncFatoraProduct(FatoraProduct fp) async {
+    final old = await fatoraProductsDB.get(fp.unified);
 
     if (old == null) {
-      await fatoraProductsDB.insert(product);
+      await fatoraProductsDB.insert(fp);
       return;
     }
 
-    if (DateTime.parse(
-      product.updatedAt,
-    ).isAfter(DateTime.parse(old.updatedAt))) {
-      await fatoraProductsDB.update(product);
+    if (DateTime.parse(fp.updatedAt).isAfter(DateTime.parse(old.updatedAt))) {
+      await fatoraProductsDB.update(fp);
     }
   }
 }
