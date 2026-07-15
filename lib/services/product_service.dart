@@ -1,45 +1,64 @@
+import 'package:naji/models/enum_status.dart';
 import 'package:naji/services/id_service.dart';
 
 import '../models/product.dart';
 import '../repositories/product_repository.dart';
+import '../services/transaction_service.dart';
 
 class ProductService {
   final ProductRepository _productRepository;
+  final TransactionService _transactionService;
 
-  ProductService(this._productRepository);
+  ProductService(this._productRepository, this._transactionService);
 
   Future<void> createProduct(Product product) async {
-    // Validate product details
-    if (product.name.isEmpty) {
-      throw Exception("Product name cannot be empty");
-    }
-    if (product.price <= 0) {
-      throw Exception("Product price must be greater than zero");
-    }
-    product = product.copyWith(
-      unified: generateUUID(),
-      createdAt: DateTime.now().millisecondsSinceEpoch,
-      updatedAt: DateTime.now().millisecondsSinceEpoch,
-    );
-    await _productRepository.create(product);
+    await _transactionService.runTransaction(() async {
+      // Validate product details
+      if (product.name.isEmpty) {
+        throw Exception("Product name cannot be empty");
+      }
+      if (product.price <= 0) {
+        throw Exception("Product price must be greater than zero");
+      }
+      product = product.copyWith(
+        unified: generateUUID(),
+        createdAt: DateTime.now().millisecondsSinceEpoch,
+        updatedAt: DateTime.now().millisecondsSinceEpoch,
+      );
+      await _productRepository.create(product);
+    });
   }
 
   Future<void> updateProduct(Product product) async {
-    // Validate product details
-    if (product.name.isEmpty) {
-      throw Exception("Product name cannot be empty");
-    }
-    if (product.price <= 0) {
-      throw Exception("Product price must be greater than zero");
-    }
-    product = product.copyWith(
-      updatedAt: DateTime.now().millisecondsSinceEpoch,
-    );
-    await _productRepository.update(product);
+    await _transactionService.runTransaction(() async {
+      // Validate product details
+      if (product.name.isEmpty) {
+        throw Exception("Product name cannot be empty");
+      }
+      if (product.price <= 0) {
+        throw Exception("Product price must be greater than zero");
+      }
+      product = product.copyWith(
+        updatedAt: DateTime.now().millisecondsSinceEpoch,
+      );
+      await _productRepository.update(product);
+    });
   }
 
   Future<void> deleteProduct(String unified) async {
-    await _productRepository.delete(unified);
+    await _transactionService.runTransaction(() async {
+      // Update status to not scheduled before deletion
+      final product = await _productRepository.get(unified);
+      if (product == null) {
+        throw Exception("Product not found");
+      }
+
+      await _productRepository.update(
+        product.copyWith(status: Status.notScheduled),
+      );
+
+      await _productRepository.delete(unified);
+    });
   }
 
   Future<List<Product>> searchProducts(String keyword) async {

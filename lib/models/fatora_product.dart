@@ -1,3 +1,5 @@
+import 'package:naji/models/enum_status.dart';
+
 import 'base_model.dart';
 
 class FatoraProduct extends BaseModel {
@@ -22,6 +24,7 @@ class FatoraProduct extends BaseModel {
     super.deletedAt,
     required super.deviceId,
     required super.syncVersion,
+    required super.status,
   });
 
   FatoraProduct copyWith({
@@ -38,6 +41,7 @@ class FatoraProduct extends BaseModel {
     int? deletedAt,
     String? deviceId,
     int? syncVersion,
+    Status? status,
   }) {
     return FatoraProduct(
       id: id ?? this.id,
@@ -53,6 +57,7 @@ class FatoraProduct extends BaseModel {
       deletedAt: deletedAt ?? this.deletedAt,
       deviceId: deviceId ?? this.deviceId,
       syncVersion: syncVersion ?? this.syncVersion,
+      status: status ?? this.status,
     );
   }
 
@@ -83,6 +88,7 @@ class FatoraProduct extends BaseModel {
       deletedAt: map["deletedAt"] as int?,
       deviceId: map["deviceId"] as String,
       syncVersion: map["syncVersion"] as int,
+      status: Status.values.byName(map["status"] as String),
     );
   }
 

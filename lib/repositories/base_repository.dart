@@ -8,4 +8,6 @@ abstract class BaseRepository<T> {
   Future<T?> get(String unified);
 
   Future<List<T>> getAll();
+
+  Future<List<T>> getNotScheduled();
 }

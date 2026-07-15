@@ -8,4 +8,6 @@ abstract class BaseDAO<T> {
   Future<T?> getByUnified(String unified);
 
   Future<List<T>> getAll();
+
+  Future<List<T>> getNotScheduled();
 }

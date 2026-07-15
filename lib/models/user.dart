@@ -1,3 +1,5 @@
+import 'package:naji/models/enum_status.dart';
+
 import 'base_model.dart';
 
 enum UserType {
@@ -32,6 +34,7 @@ class User extends BaseModel {
     super.deletedAt,
     required super.deviceId,
     required super.syncVersion,
+    required super.status,
   });
 
   User copyWith({
@@ -46,6 +49,7 @@ class User extends BaseModel {
     int? deletedAt,
     String? deviceId,
     int? syncVersion,
+    Status? status,
   }) {
     return User(
       id: id ?? this.id,
@@ -59,6 +63,7 @@ class User extends BaseModel {
       deletedAt: deletedAt ?? this.deletedAt,
       deviceId: deviceId ?? this.deviceId,
       syncVersion: syncVersion ?? this.syncVersion,
+      status: status ?? this.status,
     );
   }
 
@@ -85,6 +90,7 @@ class User extends BaseModel {
       deletedAt: map["deletedAt"] as int?,
       deviceId: map["deviceId"] as String,
       syncVersion: map["syncVersion"] as int,
+      status: Status.values.byName(map["status"] as String),
     );
   }
 

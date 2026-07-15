@@ -1,3 +1,5 @@
+import 'package:naji/models/enum_status.dart';
+
 import '../database/product_db.dart';
 import '../models/product.dart';
 import 'base_dao.dart';
@@ -49,5 +51,16 @@ class ProductDAO extends BaseDAO<Product> {
 
   Future<int> count() {
     return productDB.getAll().then((products) => products.length);
+  }
+
+  @override
+  Future<List<Product>> getNotScheduled() {
+    final allFatoras = productDB.getAll();
+    final filteres = allFatoras.then(
+      (fatoras) => fatoras
+          .where((fatora) => fatora.status == Status.notScheduled)
+          .toList(),
+    );
+    return filteres;
   }
 }

@@ -1,3 +1,5 @@
+import 'package:naji/models/enum_status.dart';
+
 abstract class BaseModel {
   final int? id;
   final String unified;
@@ -18,6 +20,9 @@ abstract class BaseModel {
   /// Increment every update
   final int syncVersion;
 
+  /// Status
+  final Status status;
+
   const BaseModel({
     this.id,
     required this.unified,
@@ -26,6 +31,7 @@ abstract class BaseModel {
     this.deletedAt,
     required this.deviceId,
     required this.syncVersion,
+    required this.status,
   });
 
   bool get isDeleted => deletedAt != null;
@@ -39,6 +45,7 @@ abstract class BaseModel {
       "deletedAt": deletedAt,
       "deviceId": deviceId,
       "syncVersion": syncVersion,
+      "status": status,
     };
   }
 }

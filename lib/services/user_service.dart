@@ -1,52 +1,71 @@
+import 'package:naji/models/enum_status.dart';
 import 'package:naji/services/id_service.dart';
 
 import '../models/user.dart';
 import '../repositories/user_repository.dart';
+import '../services/transaction_service.dart';
 
 class UserService {
   final UserRepository _userRepository;
+  final TransactionService _transactionService;
 
-  UserService(this._userRepository);
+  UserService(this._userRepository, this._transactionService);
 
   Future<void> createUser(User user) async {
-    // Validate user details
-    if (user.name.isEmpty) {
-      throw Exception("User name cannot be empty");
-    }
-    if (await _userRepository.isExist(user.name)) {
-      throw Exception("User name already exists");
-    }
-
-    // Generate UUID, timestamps, and add to sync queue
-    user = user.copyWith(
-      unified: generateUUID(),
-      createdAt: DateTime.now().millisecondsSinceEpoch,
-      updatedAt: DateTime.now().millisecondsSinceEpoch,
-    );
-    await _userRepository.create(user);
-  }
-
-  Future<void> updateUser(User user) async {
-    // Validate user details
-    if (user.name.isEmpty) {
-      throw Exception("User name cannot be empty");
-    }
-    final old = await _userRepository.get(user.unified);
-    if (old?.name != user.name) {
+    await _transactionService.runTransaction(() async {
+      // Validate user details
+      if (user.name.isEmpty) {
+        throw Exception("User name cannot be empty");
+      }
       if (await _userRepository.isExist(user.name)) {
         throw Exception("User name already exists");
       }
-    }
-    user = user.copyWith(updatedAt: DateTime.now().millisecondsSinceEpoch);
-    await _userRepository.update(user);
+
+      // Generate UUID, timestamps, and add to sync queue
+      user = user.copyWith(
+        unified: generateUUID(),
+        createdAt: DateTime.now().millisecondsSinceEpoch,
+        updatedAt: DateTime.now().millisecondsSinceEpoch,
+      );
+      await _userRepository.create(user);
+    });
+  }
+
+  Future<void> updateUser(User user) async {
+    await _transactionService.runTransaction(() async {
+      // Validate user details
+      if (user.name.isEmpty) {
+        throw Exception("User name cannot be empty");
+      }
+      final old = await _userRepository.get(user.unified);
+      if (old?.name != user.name) {
+        if (await _userRepository.isExist(user.name)) {
+          throw Exception("User name already exists");
+        }
+      }
+      user = user.copyWith(updatedAt: DateTime.now().millisecondsSinceEpoch);
+      await _userRepository.update(user);
+    });
   }
 
   Future<void> deleteUser(String unified) async {
-    await _userRepository.delete(unified);
+    await _transactionService.runTransaction(() async {
+      // Update status to not scheduled before deletion
+      final user = await _userRepository.get(unified);
+      if (user == null) {
+        throw Exception("Product not found");
+      }
+
+      await _userRepository.update(user.copyWith(status: Status.notScheduled));
+
+      await _userRepository.delete(unified);
+    });
   }
 
   Future<void> changeBalance(String unified, double total) async {
-    await _userRepository.changeBalance(unified, total);
+    await _transactionService.runTransaction(() async {
+      await _userRepository.changeBalance(unified, total);
+    });
   }
 
   Future<User?> getUser(String unified) async {

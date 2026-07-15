@@ -1,23 +1,29 @@
 import 'package:naji/dao/fatora_dao.dart';
 import 'package:naji/dao/fatora_product_dao.dart';
+import 'package:naji/repositories/base_repository.dart';
 
 import '../models/fatora.dart';
 import '../models/fatora_product.dart';
 
-class FatoraRepository {
+class FatoraRepository extends BaseRepository<Fatora> {
   final FatoraDAO _invoiceDAO;
   final FatoraProductDAO _invoiceItemDAO;
 
   FatoraRepository(this._invoiceDAO, this._invoiceItemDAO);
 
+  @override
   Future<int> create(Fatora fatora) => _invoiceDAO.insert(fatora);
 
+  @override
   Future<int> update(Fatora fatora) => _invoiceDAO.update(fatora);
 
+  @override
   Future<int> delete(String unified) => _invoiceDAO.softDelete(unified);
 
+  @override
   Future<Fatora?> get(String unified) => _invoiceDAO.getByUnified(unified);
 
+  @override
   Future<List<Fatora>> getAll() => _invoiceDAO.getAll();
 
   Future<List<Fatora>> getByUser(String userUnified) =>
@@ -39,5 +45,10 @@ class FatoraRepository {
     if (fatora == null) return {};
     final items = await _invoiceItemDAO.getByInvoice(unified);
     return {fatora: items};
+  }
+
+  @override
+  Future<List<Fatora>> getNotScheduled() {
+    return _invoiceDAO.getNotScheduled();
   }
 }

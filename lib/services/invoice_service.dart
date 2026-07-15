@@ -1,3 +1,6 @@
+import 'package:naji/models/enum_status.dart';
+import 'package:naji/services/id_service.dart';
+
 import '../models/fatora.dart';
 import '../models/fatora_product.dart';
 import '../repositories/fatora_product_repository.dart';
@@ -20,8 +23,20 @@ class InvoiceService {
 
   Future<void> createInvoice(Fatora fatora, List<FatoraProduct> items) async {
     await _transactionService.runTransaction(() async {
+      fatora = fatora.copyWith(
+        unified: generateUUID(),
+        status: Status.notScheduled,
+        createdAt: DateTime.now().millisecondsSinceEpoch,
+        updatedAt: DateTime.now().millisecondsSinceEpoch,
+      );
       await _fatoraRepository.create(fatora);
       for (var item in items) {
+        item = item.copyWith(
+          unified: generateUUID(),
+          status: Status.notScheduled,
+          createdAt: DateTime.now().millisecondsSinceEpoch,
+          updatedAt: DateTime.now().millisecondsSinceEpoch,
+        );
         await _fatoraProductRepository.create(item);
       }
       double total = items.fold(0, (sum, item) => sum + item.total);
@@ -46,9 +61,19 @@ class InvoiceService {
         await _fatoraProductRepository.delete(oldItem.unified);
       }
 
+      fatora = fatora.copyWith(
+        status: Status.notScheduled,
+        updatedAt: DateTime.now().millisecondsSinceEpoch,
+      );
       await _fatoraRepository.update(fatora);
 
       for (var item in items) {
+        item = item.copyWith(
+          unified: generateUUID(),
+          status: Status.notScheduled,
+          createdAt: DateTime.now().millisecondsSinceEpoch,
+          updatedAt: DateTime.now().millisecondsSinceEpoch,
+        );
         await _fatoraProductRepository.create(item);
       }
 
@@ -67,6 +92,11 @@ class InvoiceService {
       final items = await _fatoraProductRepository.getByInvoice(unified);
       double total = items.fold(0, (sum, item) => sum + item.total);
       await _userRepository.changeBalance(fatora.userUnified, -total);
+
+      // Update status to not scheduled
+      await _fatoraRepository.update(
+        fatora.copyWith(status: Status.notScheduled),
+      );
 
       await _fatoraRepository.delete(unified);
       for (var item in items) {
@@ -89,5 +119,9 @@ class InvoiceService {
 
   Future<double> calculateInvoice(String unified) async {
     return await _fatoraProductRepository.calculateInvoiceTotal(unified);
+  }
+
+  String generateUUID() {
+    return IdService.generate();
   }
 }

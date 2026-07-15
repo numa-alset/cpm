@@ -1,3 +1,6 @@
+import 'package:naji/models/enum_status.dart';
+import 'package:naji/services/transaction_service.dart';
+
 import '../models/payment.dart';
 import '../repositories/payment_repository.dart';
 import '../repositories/user_repository.dart';
@@ -5,43 +8,43 @@ import '../repositories/user_repository.dart';
 class PaymentService {
   final PaymentRepository _paymentRepository;
   final UserRepository _userRepository;
+  final TransactionService _transactionService;
 
-  PaymentService(this._paymentRepository, this._userRepository);
+  PaymentService(
+    this._paymentRepository,
+    this._userRepository,
+    this._transactionService,
+  );
 
   Future<void> createPayment(Payment payment) async {
-    try {
+    await _transactionService.runTransaction(() async {
       await _paymentRepository.create(payment);
       await _userRepository.changeBalance(payment.userUnified, -payment.amount);
-    } catch (e) {
-      throw Exception("Failed to create payment: $e");
-    }
+    });
   }
 
   Future<void> updatePayment(Payment payment) async {
-    final old = await _paymentRepository.get(payment.unified);
-    if (old == null) return;
+    await _transactionService.runTransaction(() async {
+      final old = await _paymentRepository.get(payment.unified);
+      if (old == null) return;
 
-    try {
       if (DateTime.fromMillisecondsSinceEpoch(
         int.parse(payment.updatedAt.toString()),
       ).isAfter(DateTime.fromMillisecondsSinceEpoch(old.updatedAt))) {
         await _paymentRepository.update(payment);
       }
-    } catch (e) {
-      throw Exception("Failed to update payment: $e");
-    }
+    });
   }
 
   Future<void> deletePayment(String unified) async {
-    // Delete payment logic
-    final old = await _paymentRepository.get(unified);
-    if (old == null) return;
-    try {
+    await _transactionService.runTransaction(() async {
+      final old = await _paymentRepository.get(unified);
+      if (old == null) return;
+      final updated = old.copyWith(status: Status.notScheduled);
+      await _paymentRepository.update(updated);
       await _paymentRepository.delete(unified);
       await _userRepository.changeBalance(old.userUnified, old.amount);
-    } catch (e) {
-      throw Exception("Failed to create payment: $e");
-    }
+    });
   }
 
   Future<List<Payment>> getPayments() async {

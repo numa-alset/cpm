@@ -1,3 +1,5 @@
+import 'package:naji/models/enum_status.dart';
+
 import '../database/user_db.dart';
 import '../models/user.dart';
 import 'base_dao.dart';
@@ -74,5 +76,16 @@ class UserDAO extends BaseDAO<User> {
       }
       return 0;
     });
+  }
+
+  @override
+  Future<List<User>> getNotScheduled() {
+    final allFatoras = userDB.getAll();
+    final filteres = allFatoras.then(
+      (fatoras) => fatoras
+          .where((fatora) => fatora.status == Status.notScheduled)
+          .toList(),
+    );
+    return filteres;
   }
 }

@@ -1,4 +1,5 @@
 import 'package:naji/database/payment_db.dart';
+import 'package:naji/models/enum_status.dart';
 
 import '../models/payment.dart';
 import 'base_dao.dart';
@@ -59,5 +60,16 @@ class PaymentDAO extends BaseDAO<Payment> {
       (payments) => payments.fold(0.0, (sum, payment) => sum + payment.amount),
     );
     return totalPaid;
+  }
+
+  @override
+  Future<List<Payment>> getNotScheduled() {
+    final allFatoras = paymentDB.getAll();
+    final filteres = allFatoras.then(
+      (fatoras) => fatoras
+          .where((fatora) => fatora.status == Status.notScheduled)
+          .toList(),
+    );
+    return filteres;
   }
 }

@@ -1,3 +1,5 @@
+import 'package:naji/models/enum_status.dart';
+
 import 'base_model.dart';
 
 enum InvoiceType {
@@ -36,6 +38,7 @@ class Fatora extends BaseModel {
     super.deletedAt,
     required super.deviceId,
     required super.syncVersion,
+    required super.status,
   });
 
   Fatora copyWith({
@@ -52,6 +55,7 @@ class Fatora extends BaseModel {
     int? deletedAt,
     String? deviceId,
     int? syncVersion,
+    Status? status,
   }) {
     return Fatora(
       id: id ?? this.id,
@@ -67,6 +71,7 @@ class Fatora extends BaseModel {
       deletedAt: deletedAt ?? this.deletedAt,
       deviceId: deviceId ?? this.deviceId,
       syncVersion: syncVersion ?? this.syncVersion,
+      status: status ?? this.status,
     );
   }
 
@@ -97,6 +102,7 @@ class Fatora extends BaseModel {
       deletedAt: map["deletedAt"] as int?,
       deviceId: map["deviceId"] as String,
       syncVersion: map["syncVersion"] as int,
+      status: Status.values.byName(map["status"] as String),
     );
   }
 

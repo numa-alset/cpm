@@ -1,4 +1,5 @@
 import 'package:naji/database/fatora_db.dart';
+import 'package:naji/models/enum_status.dart';
 
 import '../models/fatora.dart';
 import 'base_dao.dart';
@@ -95,5 +96,16 @@ class FatoraDAO extends BaseDAO<Fatora> {
       (fatoras) => fatoras.fold(0.0, (sum, fatora) => sum + fatora.total),
     );
     return total;
+  }
+
+  @override
+  Future<List<Fatora>> getNotScheduled() {
+    final allFatoras = fatoraDB.getAll();
+    final filteres = allFatoras.then(
+      (fatoras) => fatoras
+          .where((fatora) => fatora.status == Status.notScheduled)
+          .toList(),
+    );
+    return filteres;
   }
 }

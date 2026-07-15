@@ -5,22 +5,11 @@ class TransactionService {
 
   Future<T> runTransaction<T>(Future<T> Function() action) async {
     final db = await _databaseHelper.database;
-    await db.transaction((txn) async {
+    return await db.transaction((txn) async {
       try {
         return await action();
       } catch (e) {
         throw Exception("Transaction failed: $e");
-      }
-    });
-    throw Exception("Transaction did not complete");
-  }
-
-  Future<void> executeInTransaction(
-    List<Future<void> Function()> actions,
-  ) async {
-    await runTransaction(() async {
-      for (var action in actions) {
-        await action();
       }
     });
   }
