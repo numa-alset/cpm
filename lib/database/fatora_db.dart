@@ -32,7 +32,7 @@ class FatoraDB {
     );
   }
 
-  Future delete(String unified) async {
+  Future<int> delete(String unified) async {
     final database = await db.database;
 
     return database.update(

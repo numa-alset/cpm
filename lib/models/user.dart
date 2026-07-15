@@ -1,24 +1,37 @@
-class User {
-  final int? id;
-  final String unified;
+import 'base_model.dart';
+
+enum UserType {
+  buyer,
+  seller;
+
+  String get value => name;
+
+  static UserType fromString(String value) {
+    return UserType.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => UserType.buyer,
+    );
+  }
+}
+
+class User extends BaseModel {
   final String name;
   final String location;
   final double total;
-  final String type;
-  final String createdAt;
-  final String updatedAt;
-  final int isDeleted;
+  final UserType type;
 
   const User({
-    this.id,
-    required this.unified,
+    super.id,
+    required super.unified,
     required this.name,
     required this.location,
     required this.total,
     required this.type,
-    required this.createdAt,
-    required this.updatedAt,
-    this.isDeleted = 0,
+    required super.createdAt,
+    required super.updatedAt,
+    super.deletedAt,
+    required super.deviceId,
+    required super.syncVersion,
   });
 
   User copyWith({
@@ -27,10 +40,12 @@ class User {
     String? name,
     String? location,
     double? total,
-    String? type,
-    String? createdAt,
-    String? updatedAt,
-    int? isDeleted,
+    UserType? type,
+    int? createdAt,
+    int? updatedAt,
+    int? deletedAt,
+    String? deviceId,
+    int? syncVersion,
   }) {
     return User(
       id: id ?? this.id,
@@ -41,35 +56,35 @@ class User {
       type: type ?? this.type,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      isDeleted: isDeleted ?? this.isDeleted,
+      deletedAt: deletedAt ?? this.deletedAt,
+      deviceId: deviceId ?? this.deviceId,
+      syncVersion: syncVersion ?? this.syncVersion,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
-      'unified': unified,
-      'name': name,
-      'location': location,
-      'total': total,
-      'type': type,
-      'createdAt': createdAt,
-      'updatedAt': updatedAt,
-      'isDeleted': isDeleted,
+      ...baseMap(),
+      "name": name,
+      "location": location,
+      "total": total,
+      "type": type.value,
     };
   }
 
   factory User.fromMap(Map<String, dynamic> map) {
     return User(
-      id: map['id'],
-      unified: map['unified'],
-      name: map['name'],
-      location: map['location'],
-      total: (map['total'] ?? 0).toDouble(),
-      type: map['type'],
-      createdAt: map['createdAt'],
-      updatedAt: map['updatedAt'],
-      isDeleted: map['isDeleted'] ?? 0,
+      id: map["id"] as int?,
+      unified: map["unified"] as String,
+      name: map["name"] as String,
+      location: map["location"] as String,
+      total: (map["total"] as num).toDouble(),
+      type: UserType.fromString(map["type"] as String),
+      createdAt: map["createdAt"] as int,
+      updatedAt: map["updatedAt"] as int,
+      deletedAt: map["deletedAt"] as int?,
+      deviceId: map["deviceId"] as String,
+      syncVersion: map["syncVersion"] as int,
     );
   }
 

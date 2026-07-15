@@ -4,7 +4,7 @@ import 'database_helper.dart';
 class ProductDB {
   final db = DatabaseHelper.instance;
 
-  Future insert(Product product) async {
+  Future<int> insert(Product product) async {
     final database = await db.database;
     return database.insert("products", product.toMap());
   }
@@ -21,7 +21,7 @@ class ProductDB {
     return result.map((e) => Product.fromMap(e)).toList();
   }
 
-  Future update(Product product) async {
+  Future<int> update(Product product) async {
     final database = await db.database;
 
     return database.update(
@@ -32,7 +32,7 @@ class ProductDB {
     );
   }
 
-  Future delete(String unified) async {
+  Future<int> delete(String unified) async {
     final database = await db.database;
 
     return database.update(

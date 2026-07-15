@@ -1,37 +1,17 @@
-import 'dart:convert';
-import 'dart:io';
-
-import '../models/fatora.dart';
-import '../models/fatora_product.dart';
-import '../models/payment.dart';
-import '../models/product.dart';
-import '../models/user.dart';
-import 'sync_service.dart';
-
 class ImportService {
-  final SyncService sync = SyncService();
+  Future<void> importJson() async {
+    // Import data from JSON
+  }
 
-  Future<void> importBackup(File file) async {
-    final json = jsonDecode(await file.readAsString());
+  Future<void> importZip() async {
+    // Import data from ZIP
+  }
 
-    for (var item in json["users"]) {
-      await sync.syncUser(User.fromJson(item));
-    }
+  Future<void> importDatabase() async {
+    // Import database file
+  }
 
-    for (var item in json["products"]) {
-      await sync.syncProduct(Product.fromJson(item));
-    }
-
-    for (var item in json["fatoras"]) {
-      await sync.syncFatora(Fatora.fromJson(item));
-    }
-
-    for (var item in json["payments"]) {
-      await sync.syncPayment(Payment.fromJson(item));
-    }
-
-    for (var item in json["fatoraProducts"]) {
-      await sync.syncFatoraProduct(FatoraProduct.fromJson(item));
-    }
+  Future<void> mergeBackup() async {
+    // Merge imported backup with existing data
   }
 }

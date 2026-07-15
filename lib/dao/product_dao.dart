@@ -1,0 +1,53 @@
+import '../database/product_db.dart';
+import '../models/product.dart';
+import 'base_dao.dart';
+
+class ProductDAO extends BaseDAO<Product> {
+  final ProductDB productDB = ProductDB();
+
+  @override
+  Future<int> insert(Product item) {
+    return productDB.insert(item);
+  }
+
+  @override
+  Future<int> update(Product item) {
+    return productDB.update(item);
+  }
+
+  @override
+  Future<int> softDelete(String unified) {
+    return productDB.delete(unified);
+  }
+
+  @override
+  Future<Product?> getByUnified(String unified) {
+    return productDB.get(unified);
+  }
+
+  @override
+  Future<List<Product>> getAll() {
+    return productDB.getAll();
+  }
+
+  Future<List<Product>> search(String keyword) {
+    final allProducts = productDB.getAll();
+    final filtered = allProducts.then(
+      (products) => products
+          .where(
+            (product) =>
+                product.name.toLowerCase().contains(keyword.toLowerCase()),
+          )
+          .toList(),
+    );
+    return filtered;
+  }
+
+  Future<bool> exists(String unified) {
+    return productDB.get(unified).then((product) => product != null);
+  }
+
+  Future<int> count() {
+    return productDB.getAll().then((products) => products.length);
+  }
+}

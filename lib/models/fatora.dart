@@ -1,26 +1,41 @@
-class Fatora {
-  final int? id;
-  final String unified;
+import 'base_model.dart';
+
+enum InvoiceType {
+  sale,
+  purchase;
+
+  String get value => name;
+
+  static InvoiceType fromString(String value) {
+    return InvoiceType.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => InvoiceType.sale,
+    );
+  }
+}
+
+class Fatora extends BaseModel {
   final String userUnified;
   final String writer;
-  final String date;
+  final int date;
+  final InvoiceType type;
   final double total;
-  final String type;
-  final String createdAt;
-  final String updatedAt;
-  final int isDeleted;
+  final String? note;
 
   const Fatora({
-    this.id,
-    required this.unified,
+    super.id,
+    required super.unified,
     required this.userUnified,
     required this.writer,
     required this.date,
-    required this.total,
     required this.type,
-    required this.createdAt,
-    required this.updatedAt,
-    this.isDeleted = 0,
+    required this.total,
+    this.note,
+    required super.createdAt,
+    required super.updatedAt,
+    super.deletedAt,
+    required super.deviceId,
+    required super.syncVersion,
   });
 
   Fatora copyWith({
@@ -28,12 +43,15 @@ class Fatora {
     String? unified,
     String? userUnified,
     String? writer,
-    String? date,
+    int? date,
+    InvoiceType? type,
     double? total,
-    String? type,
-    String? createdAt,
-    String? updatedAt,
-    int? isDeleted,
+    String? note,
+    int? createdAt,
+    int? updatedAt,
+    int? deletedAt,
+    String? deviceId,
+    int? syncVersion,
   }) {
     return Fatora(
       id: id ?? this.id,
@@ -41,41 +59,44 @@ class Fatora {
       userUnified: userUnified ?? this.userUnified,
       writer: writer ?? this.writer,
       date: date ?? this.date,
-      total: total ?? this.total,
       type: type ?? this.type,
+      total: total ?? this.total,
+      note: note ?? this.note,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      isDeleted: isDeleted ?? this.isDeleted,
+      deletedAt: deletedAt ?? this.deletedAt,
+      deviceId: deviceId ?? this.deviceId,
+      syncVersion: syncVersion ?? this.syncVersion,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
-      'unified': unified,
-      'userUnified': userUnified,
-      'writer': writer,
-      'date': date,
-      'total': total,
-      'type': type,
-      'createdAt': createdAt,
-      'updatedAt': updatedAt,
-      'isDeleted': isDeleted,
+      ...baseMap(),
+      "userUnified": userUnified,
+      "writer": writer,
+      "date": date,
+      "type": type.value,
+      "total": total,
+      "note": note,
     };
   }
 
   factory Fatora.fromMap(Map<String, dynamic> map) {
     return Fatora(
-      id: map['id'],
-      unified: map['unified'],
-      userUnified: map['userUnified'],
-      writer: map['writer'],
-      date: map['date'],
-      total: (map['total'] ?? 0).toDouble(),
-      type: map['type'],
-      createdAt: map['createdAt'],
-      updatedAt: map['updatedAt'],
-      isDeleted: map['isDeleted'] ?? 0,
+      id: map["id"] as int?,
+      unified: map["unified"] as String,
+      userUnified: map["userUnified"] as String,
+      writer: map["writer"] as String,
+      date: map["date"] as int,
+      type: InvoiceType.fromString(map["type"] as String),
+      total: (map["total"] as num).toDouble(),
+      note: map["note"] as String?,
+      createdAt: map["createdAt"] as int,
+      updatedAt: map["updatedAt"] as int,
+      deletedAt: map["deletedAt"] as int?,
+      deviceId: map["deviceId"] as String,
+      syncVersion: map["syncVersion"] as int,
     );
   }
 

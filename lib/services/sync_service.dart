@@ -25,7 +25,9 @@ class SyncService {
       return;
     }
 
-    if (DateTime.parse(user.updatedAt).isAfter(DateTime.parse(old.updatedAt))) {
+    if (DateTime.parse(
+      user.updatedAt.toString(),
+    ).isAfter(DateTime.parse(old.updatedAt.toString()))) {
       await userDB.update(user);
     }
   }
@@ -39,8 +41,8 @@ class SyncService {
     }
 
     if (DateTime.parse(
-      product.updatedAt,
-    ).isAfter(DateTime.parse(old.updatedAt))) {
+      product.updatedAt.toString(),
+    ).isAfter(DateTime.parse(old.updatedAt.toString()))) {
       await productDB.update(product);
     }
   }
@@ -54,8 +56,8 @@ class SyncService {
     }
 
     if (DateTime.parse(
-      fatora.updatedAt,
-    ).isAfter(DateTime.parse(old.updatedAt))) {
+      fatora.updatedAt.toString(),
+    ).isAfter(DateTime.parse(old.updatedAt.toString()))) {
       await fatoraDB.update(fatora);
     }
   }
@@ -69,8 +71,8 @@ class SyncService {
     }
 
     if (DateTime.parse(
-      payment.updatedAt,
-    ).isAfter(DateTime.parse(old.updatedAt))) {
+      payment.updatedAt.toString(),
+    ).isAfter(DateTime.parse(old.updatedAt.toString()))) {
       await paymentDB.update(payment);
     }
   }
@@ -83,7 +85,9 @@ class SyncService {
       return;
     }
 
-    if (DateTime.parse(fp.updatedAt).isAfter(DateTime.parse(old.updatedAt))) {
+    if (DateTime.parse(
+      fp.updatedAt.toString(),
+    ).isAfter(DateTime.parse(old.updatedAt.toString()))) {
       await fatoraProductsDB.update(fp);
     }
   }
