@@ -51,7 +51,8 @@ CREATE TABLE users(
     deletedAt INTEGER,
 
     deviceId TEXT NOT NULL,
-    syncVersion INTEGER NOT NULL DEFAULT 1
+    syncVersion INTEGER NOT NULL DEFAULT 1,
+    status TEXT NOT NULL
 );
 """);
 
@@ -71,7 +72,8 @@ CREATE TABLE products(
     deletedAt INTEGER,
 
     deviceId TEXT NOT NULL,
-    syncVersion INTEGER NOT NULL DEFAULT 1
+    syncVersion INTEGER NOT NULL DEFAULT 1,
+    status TEXT NOT NULL
 );
 """);
 
@@ -100,6 +102,7 @@ CREATE TABLE fatoras(
 
     deviceId TEXT NOT NULL,
     syncVersion INTEGER NOT NULL DEFAULT 1,
+    status TEXT NOT NULL,
 
     FOREIGN KEY(userUnified)
     REFERENCES users(unified)
@@ -120,6 +123,8 @@ CREATE TABLE fatora_products(
     productUnified TEXT NOT NULL,
 
     name TEXT NOT NULL,
+    
+    status TEXT NOT NULL,
 
     price REAL NOT NULL,
 
@@ -154,6 +159,8 @@ CREATE TABLE payments(
     amount REAL NOT NULL,
 
     date INTEGER NOT NULL,
+    
+    status TEXT NOT NULL,
 
     createdAt INTEGER NOT NULL,
     updatedAt INTEGER NOT NULL,

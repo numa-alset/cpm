@@ -22,14 +22,14 @@ class InvoiceService {
   );
 
   Future<void> createInvoice(Fatora fatora, List<FatoraProduct> items) async {
-    await _transactionService.runTransaction(() async {
+    await _transactionService.runTransaction((txn) async {
       fatora = fatora.copyWith(
         unified: generateUUID(),
         status: Status.notScheduled,
         createdAt: DateTime.now().millisecondsSinceEpoch,
         updatedAt: DateTime.now().millisecondsSinceEpoch,
       );
-      await _fatoraRepository.create(fatora);
+      await _fatoraRepository.create(fatora, txn: txn);
       for (var item in items) {
         item = item.copyWith(
           unified: generateUUID(),
@@ -37,15 +37,15 @@ class InvoiceService {
           createdAt: DateTime.now().millisecondsSinceEpoch,
           updatedAt: DateTime.now().millisecondsSinceEpoch,
         );
-        await _fatoraProductRepository.create(item);
+        await _fatoraProductRepository.create(item, txn: txn);
       }
       double total = items.fold(0, (sum, item) => sum + item.total);
-      await _userRepository.changeBalance(fatora.userUnified, total);
+      await _userRepository.changeBalance(fatora.userUnified, total, txn);
     });
   }
 
   Future<void> updateInvoice(Fatora fatora, List<FatoraProduct> items) async {
-    await _transactionService.runTransaction(() async {
+    await _transactionService.runTransaction((txn) async {
       final oldFatora = await _fatoraRepository.get(fatora.unified);
       if (oldFatora == null) {
         throw Exception("Invoice not found");
@@ -55,17 +55,21 @@ class InvoiceService {
         fatora.unified,
       );
       double oldTotal = oldItems.fold(0, (sum, item) => sum + item.total);
-      await _userRepository.changeBalance(oldFatora.userUnified, -oldTotal);
+      await _userRepository.changeBalance(
+        oldFatora.userUnified,
+        -oldTotal,
+        txn,
+      );
 
       for (var oldItem in oldItems) {
-        await _fatoraProductRepository.delete(oldItem.unified);
+        await _fatoraProductRepository.delete(oldItem.unified, txn: txn);
       }
 
       fatora = fatora.copyWith(
         status: Status.notScheduled,
         updatedAt: DateTime.now().millisecondsSinceEpoch,
       );
-      await _fatoraRepository.update(fatora);
+      await _fatoraRepository.update(fatora, txn: txn);
 
       for (var item in items) {
         item = item.copyWith(
@@ -74,16 +78,16 @@ class InvoiceService {
           createdAt: DateTime.now().millisecondsSinceEpoch,
           updatedAt: DateTime.now().millisecondsSinceEpoch,
         );
-        await _fatoraProductRepository.create(item);
+        await _fatoraProductRepository.create(item, txn: txn);
       }
 
       double newTotal = items.fold(0, (sum, item) => sum + item.total);
-      await _userRepository.changeBalance(fatora.userUnified, newTotal);
+      await _userRepository.changeBalance(fatora.userUnified, newTotal, txn);
     });
   }
 
   Future<void> deleteInvoice(String unified) async {
-    await _transactionService.runTransaction(() async {
+    await _transactionService.runTransaction((txn) async {
       final fatora = await _fatoraRepository.get(unified);
       if (fatora == null) {
         throw Exception("Invoice not found");
@@ -91,16 +95,17 @@ class InvoiceService {
 
       final items = await _fatoraProductRepository.getByInvoice(unified);
       double total = items.fold(0, (sum, item) => sum + item.total);
-      await _userRepository.changeBalance(fatora.userUnified, -total);
+      await _userRepository.changeBalance(fatora.userUnified, -total, txn);
 
       // Update status to not scheduled
       await _fatoraRepository.update(
         fatora.copyWith(status: Status.notScheduled),
+        txn: txn,
       );
 
-      await _fatoraRepository.delete(unified);
+      await _fatoraRepository.delete(unified, txn: txn);
       for (var item in items) {
-        await _fatoraProductRepository.delete(item.unified);
+        await _fatoraProductRepository.delete(item.unified, txn: txn);
       }
     });
   }

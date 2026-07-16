@@ -1,16 +1,18 @@
+import 'package:sqflite/sqflite.dart';
+
 import '../models/fatora.dart';
 import 'database_helper.dart';
 
 class FatoraDB {
   final db = DatabaseHelper.instance;
 
-  Future insert(Fatora fatora) async {
-    final database = await db.database;
+  Future<int> insert(Fatora fatora, {Transaction? txn}) async {
+    final database = txn ?? await db.database;
     return database.insert("fatoras", fatora.toMap());
   }
 
-  Future<List<Fatora>> getAll() async {
-    final database = await db.database;
+  Future<List<Fatora>> getAll({Transaction? txn}) async {
+    final database = txn ?? await db.database;
 
     final result = await database.query(
       "fatoras",
@@ -21,8 +23,8 @@ class FatoraDB {
     return result.map((e) => Fatora.fromMap(e)).toList();
   }
 
-  Future update(Fatora fatora) async {
-    final database = await db.database;
+  Future<int> update(Fatora fatora, Transaction? txn) async {
+    final database = txn ?? await db.database;
 
     return database.update(
       "fatoras",
@@ -32,8 +34,8 @@ class FatoraDB {
     );
   }
 
-  Future<int> delete(String unified) async {
-    final database = await db.database;
+  Future<int> delete(String unified, Transaction? txn) async {
+    final database = txn ?? await db.database;
 
     return database.update(
       "fatoras",

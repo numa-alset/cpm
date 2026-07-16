@@ -1,5 +1,6 @@
 import 'package:naji/database/fatora_db.dart';
 import 'package:naji/models/enum_status.dart';
+import 'package:sqflite/sqflite.dart';
 
 import '../models/fatora.dart';
 import 'base_dao.dart';
@@ -7,30 +8,28 @@ import 'base_dao.dart';
 class FatoraDAO extends BaseDAO<Fatora> {
   final FatoraDB fatoraDB = FatoraDB();
   @override
-  Future<int> insert(Fatora item) {
-    fatoraDB.insert(item);
-    throw UnimplementedError();
+  Future<int> insert(Fatora item, {Transaction? txn}) {
+    return fatoraDB.insert(item, txn: txn);
   }
 
   @override
-  Future<int> update(Fatora item) {
-    fatoraDB.update(item);
-    throw UnimplementedError();
+  Future<int> update(Fatora item, {Transaction? txn}) async {
+    return fatoraDB.update(item, txn);
   }
 
   @override
-  Future<int> softDelete(String unified) {
-    return fatoraDB.delete(unified);
+  Future<int> softDelete(String unified, {Transaction? txn}) {
+    return fatoraDB.delete(unified, txn);
   }
 
   @override
-  Future<Fatora?> getByUnified(String unified) {
+  Future<Fatora?> getByUnified(String unified, {Transaction? txn}) {
     return fatoraDB.get(unified);
   }
 
   @override
-  Future<List<Fatora>> getAll() {
-    return fatoraDB.getAll();
+  Future<List<Fatora>> getAll({Transaction? txn}) {
+    return fatoraDB.getAll(txn: txn);
   }
 
   Future<List<Fatora>> getByUser(String userUnified) {
@@ -99,7 +98,7 @@ class FatoraDAO extends BaseDAO<Fatora> {
   }
 
   @override
-  Future<List<Fatora>> getNotScheduled() {
+  Future<List<Fatora>> getNotScheduled({Transaction? txn}) {
     final allFatoras = fatoraDB.getAll();
     final filteres = allFatoras.then(
       (fatoras) => fatoras

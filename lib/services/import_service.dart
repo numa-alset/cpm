@@ -1,13 +1,15 @@
+import 'dart:io';
+
 class ImportService {
-  Future<void> importJson() async {
+  Future<void> importJson(File file) async {
     // Import data from JSON
   }
 
-  Future<void> importZip() async {
+  Future<void> importZip(File file) async {
     // Import data from ZIP
   }
 
-  Future<void> importDatabase() async {
+  Future<void> importDatabase(File file) async {
     // Import database file
   }
 

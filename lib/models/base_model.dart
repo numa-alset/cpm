@@ -45,7 +45,7 @@ abstract class BaseModel {
       "deletedAt": deletedAt,
       "deviceId": deviceId,
       "syncVersion": syncVersion,
-      "status": status,
+      "status": status.value,
     };
   }
 }

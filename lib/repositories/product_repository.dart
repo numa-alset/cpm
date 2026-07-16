@@ -1,4 +1,5 @@
 import 'package:naji/repositories/base_repository.dart';
+import 'package:sqflite/sqflite.dart';
 
 import '../dao/product_dao.dart';
 import '../models/product.dart';
@@ -9,16 +10,20 @@ class ProductRepository extends BaseRepository<Product> {
   ProductRepository(this._productDAO);
 
   @override
-  Future<int> create(Product product) => _productDAO.insert(product);
+  Future<int> create(Product product, {Transaction? txn}) =>
+      _productDAO.insert(product, txn: txn);
 
   @override
-  Future<int> update(Product product) => _productDAO.update(product);
+  Future<int> update(Product product, {Transaction? txn}) =>
+      _productDAO.update(product, txn: txn);
 
   @override
-  Future<int> delete(String unified) => _productDAO.softDelete(unified);
+  Future<int> delete(String unified, {Transaction? txn}) =>
+      _productDAO.softDelete(unified, txn: txn);
 
   @override
-  Future<Product?> get(String unified) => _productDAO.getByUnified(unified);
+  Future<Product?> get(String unified, {Transaction? txn}) =>
+      _productDAO.getByUnified(unified, txn: txn);
 
   @override
   Future<List<Product>> getAll() => _productDAO.getAll();

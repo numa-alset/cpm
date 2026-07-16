@@ -1,16 +1,18 @@
+import 'package:sqflite/sqflite.dart';
+
 import '../models/user.dart';
 import 'database_helper.dart';
 
 class UserDB {
   final db = DatabaseHelper.instance;
 
-  Future<int> insert(User user) async {
-    final database = await db.database;
+  Future<int> insert(User user, Transaction? txn) async {
+    final database = txn ?? await db.database;
     return await database.insert("users", user.toMap());
   }
 
-  Future<List<User>> getAll() async {
-    final database = await db.database;
+  Future<List<User>> getAll({Transaction? txn}) async {
+    final database = txn ?? await db.database;
 
     final result = await database.query(
       "users",
@@ -35,8 +37,8 @@ class UserDB {
     return User.fromMap(result.first);
   }
 
-  Future<int> update(User user) async {
-    final database = await db.database;
+  Future<int> update(User user, Transaction? txn) async {
+    final database = txn ?? await db.database;
 
     return await database.update(
       "users",
@@ -46,9 +48,8 @@ class UserDB {
     );
   }
 
-  Future<int> delete(String unified) async {
-    final database = await db.database;
-
+  Future<int> delete(String unified, Transaction? txn) async {
+    final database = txn ?? await db.database;
     return await database.update(
       "users",
       {"isDeleted": 1, "updatedAt": DateTime.now().toIso8601String()},

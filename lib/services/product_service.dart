@@ -12,7 +12,7 @@ class ProductService {
   ProductService(this._productRepository, this._transactionService);
 
   Future<void> createProduct(Product product) async {
-    await _transactionService.runTransaction(() async {
+    await _transactionService.runTransaction((txn) async {
       // Validate product details
       if (product.name.isEmpty) {
         throw Exception("Product name cannot be empty");
@@ -25,12 +25,12 @@ class ProductService {
         createdAt: DateTime.now().millisecondsSinceEpoch,
         updatedAt: DateTime.now().millisecondsSinceEpoch,
       );
-      await _productRepository.create(product);
+      await _productRepository.create(product, txn: txn);
     });
   }
 
   Future<void> updateProduct(Product product) async {
-    await _transactionService.runTransaction(() async {
+    await _transactionService.runTransaction((txn) async {
       // Validate product details
       if (product.name.isEmpty) {
         throw Exception("Product name cannot be empty");
@@ -41,12 +41,12 @@ class ProductService {
       product = product.copyWith(
         updatedAt: DateTime.now().millisecondsSinceEpoch,
       );
-      await _productRepository.update(product);
+      await _productRepository.update(product, txn: txn);
     });
   }
 
   Future<void> deleteProduct(String unified) async {
-    await _transactionService.runTransaction(() async {
+    await _transactionService.runTransaction((txn) async {
       // Update status to not scheduled before deletion
       final product = await _productRepository.get(unified);
       if (product == null) {
@@ -55,9 +55,10 @@ class ProductService {
 
       await _productRepository.update(
         product.copyWith(status: Status.notScheduled),
+        txn: txn,
       );
 
-      await _productRepository.delete(unified);
+      await _productRepository.delete(unified, txn: txn);
     });
   }
 

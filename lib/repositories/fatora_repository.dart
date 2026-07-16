@@ -1,6 +1,7 @@
 import 'package:naji/dao/fatora_dao.dart';
 import 'package:naji/dao/fatora_product_dao.dart';
 import 'package:naji/repositories/base_repository.dart';
+import 'package:sqflite/sqflite.dart';
 
 import '../models/fatora.dart';
 import '../models/fatora_product.dart';
@@ -12,16 +13,20 @@ class FatoraRepository extends BaseRepository<Fatora> {
   FatoraRepository(this._invoiceDAO, this._invoiceItemDAO);
 
   @override
-  Future<int> create(Fatora fatora) => _invoiceDAO.insert(fatora);
+  Future<int> create(Fatora fatora, {Transaction? txn}) =>
+      _invoiceDAO.insert(fatora, txn: txn);
 
   @override
-  Future<int> update(Fatora fatora) => _invoiceDAO.update(fatora);
+  Future<int> update(Fatora fatora, {Transaction? txn}) =>
+      _invoiceDAO.update(fatora, txn: txn);
 
   @override
-  Future<int> delete(String unified) => _invoiceDAO.softDelete(unified);
+  Future<int> delete(String unified, {Transaction? txn}) =>
+      _invoiceDAO.softDelete(unified, txn: txn);
 
   @override
-  Future<Fatora?> get(String unified) => _invoiceDAO.getByUnified(unified);
+  Future<Fatora?> get(String unified, {Transaction? txn}) =>
+      _invoiceDAO.getByUnified(unified, txn: txn);
 
   @override
   Future<List<Fatora>> getAll() => _invoiceDAO.getAll();

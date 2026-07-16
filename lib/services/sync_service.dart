@@ -21,14 +21,14 @@ class SyncService {
     final old = await userDB.get(user.unified);
 
     if (old == null) {
-      await userDB.insert(user);
+      await userDB.insert(user, null);
       return;
     }
 
     if (DateTime.parse(
       user.updatedAt.toString(),
     ).isAfter(DateTime.parse(old.updatedAt.toString()))) {
-      await userDB.update(user);
+      await userDB.update(user, null);
     }
   }
 
@@ -43,7 +43,7 @@ class SyncService {
     if (DateTime.parse(
       product.updatedAt.toString(),
     ).isAfter(DateTime.parse(old.updatedAt.toString()))) {
-      await productDB.update(product);
+      await productDB.update(product, null);
     }
   }
 
@@ -58,7 +58,7 @@ class SyncService {
     if (DateTime.parse(
       fatora.updatedAt.toString(),
     ).isAfter(DateTime.parse(old.updatedAt.toString()))) {
-      await fatoraDB.update(fatora);
+      await fatoraDB.update(fatora, null);
     }
   }
 
@@ -73,7 +73,7 @@ class SyncService {
     if (DateTime.parse(
       payment.updatedAt.toString(),
     ).isAfter(DateTime.parse(old.updatedAt.toString()))) {
-      await paymentDB.update(payment);
+      await paymentDB.update(payment, null);
     }
   }
 
@@ -88,7 +88,7 @@ class SyncService {
     if (DateTime.parse(
       fp.updatedAt.toString(),
     ).isAfter(DateTime.parse(old.updatedAt.toString()))) {
-      await fatoraProductsDB.update(fp);
+      await fatoraProductsDB.update(fp, null);
     }
   }
 }

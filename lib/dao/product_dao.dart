@@ -1,4 +1,5 @@
 import 'package:naji/models/enum_status.dart';
+import 'package:sqflite/sqflite.dart';
 
 import '../database/product_db.dart';
 import '../models/product.dart';
@@ -8,28 +9,28 @@ class ProductDAO extends BaseDAO<Product> {
   final ProductDB productDB = ProductDB();
 
   @override
-  Future<int> insert(Product item) {
-    return productDB.insert(item);
+  Future<int> insert(Product item, {Transaction? txn}) {
+    return productDB.insert(item, txn: txn);
   }
 
   @override
-  Future<int> update(Product item) {
-    return productDB.update(item);
+  Future<int> update(Product item, {Transaction? txn}) {
+    return productDB.update(item, txn);
   }
 
   @override
-  Future<int> softDelete(String unified) {
-    return productDB.delete(unified);
+  Future<int> softDelete(String unified, {Transaction? txn}) {
+    return productDB.delete(unified, txn);
   }
 
   @override
-  Future<Product?> getByUnified(String unified) {
+  Future<Product?> getByUnified(String unified, {Transaction? txn}) {
     return productDB.get(unified);
   }
 
   @override
-  Future<List<Product>> getAll() {
-    return productDB.getAll();
+  Future<List<Product>> getAll({Transaction? txn}) {
+    return productDB.getAll(txn: txn);
   }
 
   Future<List<Product>> search(String keyword) {
@@ -54,7 +55,7 @@ class ProductDAO extends BaseDAO<Product> {
   }
 
   @override
-  Future<List<Product>> getNotScheduled() {
+  Future<List<Product>> getNotScheduled({Transaction? txn}) {
     final allFatoras = productDB.getAll();
     final filteres = allFatoras.then(
       (fatoras) => fatoras

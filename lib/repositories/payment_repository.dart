@@ -1,4 +1,5 @@
 import 'package:naji/repositories/base_repository.dart';
+import 'package:sqflite/sqflite.dart';
 
 import '../dao/payment_dao.dart';
 import '../models/payment.dart';
@@ -9,16 +10,20 @@ class PaymentRepository extends BaseRepository<Payment> {
   PaymentRepository(this._paymentDAO);
 
   @override
-  Future<int> create(Payment payment) => _paymentDAO.insert(payment);
+  Future<int> create(Payment payment, {Transaction? txn}) =>
+      _paymentDAO.insert(payment, txn: txn);
 
   @override
-  Future<int> update(Payment payment) => _paymentDAO.update(payment);
+  Future<int> update(Payment payment, {Transaction? txn}) =>
+      _paymentDAO.update(payment, txn: txn);
 
   @override
-  Future<int> delete(String unified) => _paymentDAO.softDelete(unified);
+  Future<int> delete(String unified, {Transaction? txn}) =>
+      _paymentDAO.softDelete(unified, txn: txn);
 
   @override
-  Future<Payment?> get(String unified) => _paymentDAO.getByUnified(unified);
+  Future<Payment?> get(String unified, {Transaction? txn}) =>
+      _paymentDAO.getByUnified(unified, txn: txn);
 
   @override
   Future<List<Payment>> getAll() => _paymentDAO.getAll();

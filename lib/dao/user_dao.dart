@@ -1,4 +1,5 @@
 import 'package:naji/models/enum_status.dart';
+import 'package:sqflite/sqflite.dart';
 
 import '../database/user_db.dart';
 import '../models/user.dart';
@@ -8,28 +9,28 @@ class UserDAO extends BaseDAO<User> {
   final UserDB userDB = UserDB();
 
   @override
-  Future<int> insert(User item) {
-    return userDB.insert(item);
+  Future<int> insert(User item, {Transaction? txn}) {
+    return userDB.insert(item, txn);
   }
 
   @override
-  Future<int> update(User item) {
-    return userDB.update(item);
+  Future<int> update(User item, {Transaction? txn}) {
+    return userDB.update(item, txn);
   }
 
   @override
-  Future<int> softDelete(String unified) {
-    return userDB.delete(unified);
+  Future<int> softDelete(String unified, {Transaction? txn}) {
+    return userDB.delete(unified, txn);
   }
 
   @override
-  Future<User?> getByUnified(String unified) {
+  Future<User?> getByUnified(String unified, {Transaction? txn}) {
     return userDB.get(unified);
   }
 
   @override
-  Future<List<User>> getAll() {
-    return userDB.getAll();
+  Future<List<User>> getAll({Transaction? txn}) {
+    return userDB.getAll(txn: txn);
   }
 
   Future<List<User>> getBuyers() {
@@ -68,18 +69,18 @@ class UserDAO extends BaseDAO<User> {
     return filtered;
   }
 
-  Future<int> updateBalance(String unified, double total) {
+  Future<int> updateBalance(String unified, double total, Transaction? txn) {
     return userDB.get(unified).then((user) {
       if (user != null) {
         final updatedUser = user.copyWith(total: user.total + total);
-        return userDB.update(updatedUser);
+        return userDB.update(updatedUser, txn);
       }
       return 0;
     });
   }
 
   @override
-  Future<List<User>> getNotScheduled() {
+  Future<List<User>> getNotScheduled({Transaction? txn}) {
     final allFatoras = userDB.getAll();
     final filteres = allFatoras.then(
       (fatoras) => fatoras

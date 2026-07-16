@@ -1,5 +1,6 @@
 import 'package:naji/database/payment_db.dart';
 import 'package:naji/models/enum_status.dart';
+import 'package:sqflite/sqflite.dart';
 
 import '../models/payment.dart';
 import 'base_dao.dart';
@@ -8,28 +9,28 @@ class PaymentDAO extends BaseDAO<Payment> {
   final PaymentDB paymentDB = PaymentDB();
 
   @override
-  Future<int> insert(Payment item) {
-    return paymentDB.insert(item);
+  Future<int> insert(Payment item, {Transaction? txn}) {
+    return paymentDB.insert(item, txn: txn);
   }
 
   @override
-  Future<int> update(Payment item) {
-    return paymentDB.update(item);
+  Future<int> update(Payment item, {Transaction? txn}) {
+    return paymentDB.update(item, txn);
   }
 
   @override
-  Future<int> softDelete(String unified) {
-    return paymentDB.delete(unified);
+  Future<int> softDelete(String unified, {Transaction? txn}) {
+    return paymentDB.delete(unified, txn);
   }
 
   @override
-  Future<Payment?> getByUnified(String unified) {
+  Future<Payment?> getByUnified(String unified, {Transaction? txn}) {
     return paymentDB.get(unified);
   }
 
   @override
-  Future<List<Payment>> getAll() {
-    return paymentDB.getAll();
+  Future<List<Payment>> getAll({Transaction? txn}) {
+    return paymentDB.getAll(txn: txn);
   }
 
   Future<List<Payment>> getByUser(String userUnified) {
@@ -63,7 +64,7 @@ class PaymentDAO extends BaseDAO<Payment> {
   }
 
   @override
-  Future<List<Payment>> getNotScheduled() {
+  Future<List<Payment>> getNotScheduled({Transaction? txn}) {
     final allFatoras = paymentDB.getAll();
     final filteres = allFatoras.then(
       (fatoras) => fatoras

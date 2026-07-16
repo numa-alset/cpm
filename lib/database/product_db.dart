@@ -1,16 +1,18 @@
+import 'package:sqflite/sqflite.dart';
+
 import '../models/product.dart';
 import 'database_helper.dart';
 
 class ProductDB {
   final db = DatabaseHelper.instance;
 
-  Future<int> insert(Product product) async {
-    final database = await db.database;
+  Future<int> insert(Product product, {Transaction? txn}) async {
+    final database = txn ?? await db.database;
     return database.insert("products", product.toMap());
   }
 
-  Future<List<Product>> getAll() async {
-    final database = await db.database;
+  Future<List<Product>> getAll({Transaction? txn}) async {
+    final database = txn ?? await db.database;
 
     final result = await database.query(
       "products",
@@ -21,8 +23,8 @@ class ProductDB {
     return result.map((e) => Product.fromMap(e)).toList();
   }
 
-  Future<int> update(Product product) async {
-    final database = await db.database;
+  Future<int> update(Product product, Transaction? txn) async {
+    final database = txn ?? await db.database;
 
     return database.update(
       "products",
@@ -32,8 +34,8 @@ class ProductDB {
     );
   }
 
-  Future<int> delete(String unified) async {
-    final database = await db.database;
+  Future<int> delete(String unified, Transaction? txn) async {
+    final database = txn ?? await db.database;
 
     return database.update(
       "products",

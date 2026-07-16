@@ -1,13 +1,15 @@
+import 'package:sqflite/sqflite.dart';
+
 abstract class BaseDAO<T> {
-  Future<int> insert(T item);
+  Future<int> insert(T item, {Transaction txn});
 
-  Future<int> update(T item);
+  Future<int> update(T item, {Transaction txn});
 
-  Future<int> softDelete(String unified);
+  Future<int> softDelete(String unified, {Transaction txn});
 
-  Future<T?> getByUnified(String unified);
+  Future<T?> getByUnified(String unified, {Transaction? txn});
 
-  Future<List<T>> getAll();
+  Future<List<T>> getAll({Transaction? txn});
 
-  Future<List<T>> getNotScheduled();
+  Future<List<T>> getNotScheduled({Transaction? txn});
 }

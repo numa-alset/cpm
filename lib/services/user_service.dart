@@ -12,7 +12,7 @@ class UserService {
   UserService(this._userRepository, this._transactionService);
 
   Future<void> createUser(User user) async {
-    await _transactionService.runTransaction(() async {
+    await _transactionService.runTransaction((txn) async {
       // Validate user details
       if (user.name.isEmpty) {
         throw Exception("User name cannot be empty");
@@ -27,12 +27,12 @@ class UserService {
         createdAt: DateTime.now().millisecondsSinceEpoch,
         updatedAt: DateTime.now().millisecondsSinceEpoch,
       );
-      await _userRepository.create(user);
+      await _userRepository.create(user, txn: txn);
     });
   }
 
   Future<void> updateUser(User user) async {
-    await _transactionService.runTransaction(() async {
+    await _transactionService.runTransaction((txn) async {
       // Validate user details
       if (user.name.isEmpty) {
         throw Exception("User name cannot be empty");
@@ -44,12 +44,12 @@ class UserService {
         }
       }
       user = user.copyWith(updatedAt: DateTime.now().millisecondsSinceEpoch);
-      await _userRepository.update(user);
+      await _userRepository.update(user, txn: txn);
     });
   }
 
   Future<void> deleteUser(String unified) async {
-    await _transactionService.runTransaction(() async {
+    await _transactionService.runTransaction((tsx) async {
       // Update status to not scheduled before deletion
       final user = await _userRepository.get(unified);
       if (user == null) {
@@ -63,8 +63,8 @@ class UserService {
   }
 
   Future<void> changeBalance(String unified, double total) async {
-    await _transactionService.runTransaction(() async {
-      await _userRepository.changeBalance(unified, total);
+    await _transactionService.runTransaction((txn) async {
+      await _userRepository.changeBalance(unified, total, txn);
     });
   }
 
