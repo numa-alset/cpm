@@ -1,5 +1,5 @@
-import 'package:naji/dao/fatora_product_dao.dart';
-import 'package:naji/repositories/base_repository.dart';
+import 'package:naji/core/dao/fatora_product_dao.dart';
+import 'package:naji/core/repositories/base_repository.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../models/fatora_product.dart';

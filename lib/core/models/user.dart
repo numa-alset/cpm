@@ -1,16 +1,34 @@
-import 'package:naji/models/enum_status.dart';
+import 'package:naji/core/models/enum_status.dart';
 
 import 'base_model.dart';
 
-class Product extends BaseModel {
-  final String name;
-  final double price;
+enum UserType {
+  buyer,
+  seller;
 
-  const Product({
+  String get value => name;
+
+  static UserType fromString(String value) {
+    return UserType.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => UserType.buyer,
+    );
+  }
+}
+
+class User extends BaseModel {
+  final String name;
+  final String location;
+  final double total;
+  final UserType type;
+
+  const User({
     super.id,
     required super.unified,
     required this.name,
-    required this.price,
+    required this.location,
+    required this.total,
+    required this.type,
     required super.createdAt,
     required super.updatedAt,
     super.deletedAt,
@@ -19,11 +37,13 @@ class Product extends BaseModel {
     required super.status,
   });
 
-  Product copyWith({
+  User copyWith({
     int? id,
     String? unified,
     String? name,
-    double? price,
+    String? location,
+    double? total,
+    UserType? type,
     int? createdAt,
     int? updatedAt,
     int? deletedAt,
@@ -31,11 +51,13 @@ class Product extends BaseModel {
     int? syncVersion,
     Status? status,
   }) {
-    return Product(
+    return User(
       id: id ?? this.id,
       unified: unified ?? this.unified,
       name: name ?? this.name,
-      price: price ?? this.price,
+      location: location ?? this.location,
+      total: total ?? this.total,
+      type: type ?? this.type,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
@@ -46,15 +68,23 @@ class Product extends BaseModel {
   }
 
   Map<String, dynamic> toMap() {
-    return {...baseMap(), "name": name, "price": price};
+    return {
+      ...baseMap(),
+      "name": name,
+      "location": location,
+      "total": total,
+      "type": type.value,
+    };
   }
 
-  factory Product.fromMap(Map<String, dynamic> map) {
-    return Product(
+  factory User.fromMap(Map<String, dynamic> map) {
+    return User(
       id: map["id"] as int?,
       unified: map["unified"] as String,
       name: map["name"] as String,
-      price: (map["price"] as num).toDouble(),
+      location: map["location"] as String,
+      total: (map["total"] as num).toDouble(),
+      type: UserType.fromString(map["type"] as String),
       createdAt: map["createdAt"] as int,
       updatedAt: map["updatedAt"] as int,
       deletedAt: map["deletedAt"] as int?,
@@ -66,7 +96,7 @@ class Product extends BaseModel {
 
   Map<String, dynamic> toJson() => toMap();
 
-  factory Product.fromJson(Map<String, dynamic> json) {
-    return Product.fromMap(json);
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User.fromMap(json);
   }
 }

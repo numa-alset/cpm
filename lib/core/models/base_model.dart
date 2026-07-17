@@ -1,4 +1,4 @@
-import 'package:naji/models/enum_status.dart';
+import 'package:naji/core/models/enum_status.dart';
 
 abstract class BaseModel {
   final int? id;

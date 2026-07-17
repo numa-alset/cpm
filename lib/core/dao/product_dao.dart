@@ -1,4 +1,4 @@
-import 'package:naji/models/enum_status.dart';
+import 'package:naji/core/models/enum_status.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database/product_db.dart';

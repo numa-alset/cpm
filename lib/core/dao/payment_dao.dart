@@ -1,5 +1,5 @@
-import 'package:naji/database/payment_db.dart';
-import 'package:naji/models/enum_status.dart';
+import 'package:naji/core/database/payment_db.dart';
+import 'package:naji/core/models/enum_status.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../models/payment.dart';

@@ -1,4 +1,4 @@
-import 'package:naji/database/products_fatoras_db.dart';
+import 'package:naji/core/database/products_fatoras_db.dart';
 
 import '../database/fatora_db.dart';
 import '../database/payment_db.dart';

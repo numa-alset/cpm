@@ -1,5 +1,5 @@
-import 'package:naji/database/fatora_db.dart';
-import 'package:naji/models/enum_status.dart';
+import 'package:naji/core/database/fatora_db.dart';
+import 'package:naji/core/models/enum_status.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../models/fatora.dart';

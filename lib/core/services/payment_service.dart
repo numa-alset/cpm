@@ -1,5 +1,5 @@
-import 'package:naji/models/enum_status.dart';
-import 'package:naji/services/transaction_service.dart';
+import 'package:naji/core/models/enum_status.dart';
+import 'package:naji/core/services/transaction_service.dart';
 
 import '../models/payment.dart';
 import '../repositories/payment_repository.dart';

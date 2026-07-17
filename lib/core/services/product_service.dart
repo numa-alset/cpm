@@ -1,9 +1,9 @@
-import 'package:naji/models/enum_status.dart';
-import 'package:naji/services/id_service.dart';
+import 'package:naji/core/models/enum_status.dart';
+import 'package:naji/core/services/id_service.dart';
 
 import '../models/product.dart';
 import '../repositories/product_repository.dart';
-import '../services/transaction_service.dart';
+import 'transaction_service.dart';
 
 class ProductService {
   final ProductRepository _productRepository;

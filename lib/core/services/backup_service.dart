@@ -2,11 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive_io.dart';
-import 'package:naji/database/fatora_db.dart';
-import 'package:naji/database/payment_db.dart';
-import 'package:naji/database/product_db.dart';
-import 'package:naji/database/products_fatoras_db.dart';
-import 'package:naji/database/user_db.dart';
+import 'package:naji/core/database/fatora_db.dart';
+import 'package:naji/core/database/payment_db.dart';
+import 'package:naji/core/database/product_db.dart';
+import 'package:naji/core/database/products_fatoras_db.dart';
+import 'package:naji/core/database/user_db.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
