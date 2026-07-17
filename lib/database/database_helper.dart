@@ -6,6 +6,7 @@ class DatabaseHelper {
 
   static final DatabaseHelper instance = DatabaseHelper._();
 
+  static final String databaseName = "naji.db";
   Database? _database;
 
   Future<Database> get database async {
@@ -16,7 +17,7 @@ class DatabaseHelper {
   Future<Database> _initDatabase() async {
     final dbPath = await getDatabasesPath();
 
-    final path = join(dbPath, "naji.db");
+    final path = join(dbPath, DatabaseHelper.databaseName);
 
     return await openDatabase(
       path,

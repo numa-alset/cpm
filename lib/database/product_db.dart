@@ -58,4 +58,17 @@ class ProductDB {
 
     return Product.fromMap(result.first);
   }
+
+  Future<List<Product>> getUnsynced({Transaction? txn}) async {
+    final database = txn ?? await db.database;
+
+    final result = await database.query(
+      "products",
+      where: "status=?",
+      whereArgs: ["notScheduled"],
+      orderBy: "updatedAt DESC",
+    );
+
+    return result.map((e) => Product.fromMap(e)).toList();
+  }
 }

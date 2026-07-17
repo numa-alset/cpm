@@ -17,7 +17,7 @@ class UserDB {
     final result = await database.query(
       "users",
       where: "isDeleted=0",
-      orderBy: "name",
+      orderBy: "updatedAt DESC",
     );
 
     return result.map((e) => User.fromMap(e)).toList();
@@ -56,5 +56,18 @@ class UserDB {
       where: "unified=?",
       whereArgs: [unified],
     );
+  }
+
+  Future<List<User>> getUnsynced({Transaction? txn}) async {
+    final database = txn ?? await db.database;
+
+    final result = await database.query(
+      "users",
+      where: "status=?",
+      whereArgs: ["notScheduled"],
+      orderBy: "updatedAt DESC",
+    );
+
+    return result.map((e) => User.fromMap(e)).toList();
   }
 }

@@ -58,4 +58,17 @@ class FatoraDB {
 
     return Fatora.fromMap(result.first);
   }
+
+  Future<List<Fatora>> getUnsynced({Transaction? txn}) async {
+    final database = txn ?? await db.database;
+
+    final result = await database.query(
+      "fatoras",
+      where: "status=?",
+      whereArgs: ["notScheduled"],
+      orderBy: "updatedAt DESC",
+    );
+
+    return result.map((e) => Fatora.fromMap(e)).toList();
+  }
 }

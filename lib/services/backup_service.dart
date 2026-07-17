@@ -15,6 +15,8 @@ import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
 
 class BackupService {
+  static final String backupFolderName = "naji_backup";
+
   final UserDB _userDB = UserDB();
   final ProductDB _productDB = ProductDB();
   final FatoraDB _fatoraDB = FatoraDB();
@@ -26,7 +28,10 @@ class BackupService {
     final dir = await getApplicationDocumentsDirectory();
 
     final file = File(
-      join(dir.path, 'backup_${DateTime.now().millisecondsSinceEpoch}.json'),
+      join(
+        dir.path,
+        '${backupFolderName}_${DateTime.now().millisecondsSinceEpoch}.json',
+      ),
     );
 
     final backup = {
@@ -60,7 +65,10 @@ class BackupService {
     final dir = await getApplicationDocumentsDirectory();
 
     final zipFile = File(
-      join(dir.path, 'backup_${DateTime.now().millisecondsSinceEpoch}.zip'),
+      join(
+        dir.path,
+        '${backupFolderName}_${DateTime.now().millisecondsSinceEpoch}.zip',
+      ),
     );
 
     final encoder = ZipFileEncoder();
@@ -83,7 +91,10 @@ class BackupService {
     final dir = await getApplicationDocumentsDirectory();
 
     final destination = File(
-      join(dir.path, 'database_${DateTime.now().millisecondsSinceEpoch}.db'),
+      join(
+        dir.path,
+        '${backupFolderName}_database_${DateTime.now().millisecondsSinceEpoch}.db',
+      ),
     );
 
     return source.copy(destination.path);
@@ -124,6 +135,76 @@ class BackupService {
           .map((e) => e.toMap())
           .toList(),
     };
+
+    await file.writeAsString(
+      const JsonEncoder.withIndent("  ").convert(backup),
+    );
+
+    return file;
+  }
+
+  /// Export a single selected record by unified identifier and type
+  Future<File> exportSingleRecord({
+    required String type,
+    required String unified,
+  }) async {
+    final dir = await getApplicationDocumentsDirectory();
+
+    final file = File(
+      join(
+        dir.path,
+        '${backupFolderName}_${type}_${unified}_${DateTime.now().millisecondsSinceEpoch}.json',
+      ),
+    );
+
+    final backup = {
+      "createdAt": DateTime.now().toIso8601String(),
+      "version": 1,
+
+      "users": <dynamic>[],
+      "products": <dynamic>[],
+      "fatoras": <dynamic>[],
+      "payments": <dynamic>[],
+      "fatoraProducts": <dynamic>[],
+    };
+
+    switch (type) {
+      case 'user':
+      case 'users':
+        final u = await _userDB.get(unified);
+        if (u != null) backup['users'] = [u.toMap()];
+        break;
+
+      case 'product':
+      case 'products':
+        final p = await _productDB.get(unified);
+        if (p != null) backup['products'] = [p.toMap()];
+        break;
+
+      case 'fatora':
+      case 'fatoras':
+      case 'invoice':
+        final f = await _fatoraDB.get(unified);
+        if (f != null) backup['fatoras'] = [f.toMap()];
+        break;
+
+      case 'payment':
+      case 'payments':
+        final pay = await _paymentDB.get(unified);
+        if (pay != null) backup['payments'] = [pay.toMap()];
+        break;
+
+      case 'fatoraProduct':
+      case 'fatora_products':
+      case 'fatoraproduct':
+        final fp = await _fatoraProductsDB.get(unified);
+        if (fp != null) backup['fatoraProducts'] = [fp.toMap()];
+        break;
+
+      default:
+        // Unknown type: produce empty backup
+        break;
+    }
 
     await file.writeAsString(
       const JsonEncoder.withIndent("  ").convert(backup),

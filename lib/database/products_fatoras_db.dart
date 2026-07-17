@@ -73,4 +73,17 @@ class FatoraProductsDB {
 
     return result.map((e) => FatoraProduct.fromMap(e)).toList();
   }
+
+  Future<List<FatoraProduct>> getUnsynced({Transaction? txn}) async {
+    final database = txn ?? await db.database;
+
+    final result = await database.query(
+      "fatora_products",
+      where: "status=?",
+      whereArgs: ["notScheduled"],
+      orderBy: "updatedAt DESC",
+    );
+
+    return result.map((e) => FatoraProduct.fromMap(e)).toList();
+  }
 }

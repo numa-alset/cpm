@@ -58,4 +58,17 @@ class PaymentDB {
 
     return Payment.fromMap(result.first);
   }
+
+  Future<List<Payment>> getUnsynced({Transaction? txn}) async {
+    final database = txn ?? await db.database;
+
+    final result = await database.query(
+      "payments",
+      where: "status=?",
+      whereArgs: ["notScheduled"],
+      orderBy: "updatedAt DESC",
+    );
+
+    return result.map((e) => Payment.fromMap(e)).toList();
+  }
 }
