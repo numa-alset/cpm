@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
+import 'package:naji/locator/locator.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await setupLocator();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   runApp(const MyApp());
 }
 
@@ -10,34 +19,25 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+    return ChangeNotifierProvider(
+      create: (_) => null,
+      child: Builder(
+        builder: (context) {
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: MaterialApp.router(
+              locale: Locale('ar'),
+              supportedLocales: const [Locale('ar')],
+              title: "Naji",
+              routeInformationProvider:
+                  getIt<GoRouter>().routeInformationProvider,
+              routeInformationParser: getIt<GoRouter>().routeInformationParser,
+              routerDelegate: getIt<GoRouter>().routerDelegate,
+              backButtonDispatcher: RootBackButtonDispatcher(),
+            ),
+          );
+        },
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  final String title;
-
-  const MyHomePage({super.key, required this.title});
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(child: Text('Hello, World!')),
     );
   }
 }

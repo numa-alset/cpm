@@ -11,6 +11,11 @@ class DeviceService {
     return _deviceId!;
   }
 
+  Future<bool> hasDeviceId() async {
+    _deviceId ??= await loadDeviceId();
+    return _deviceId != null;
+  }
+
   Future<void> saveDeviceId(String deviceId) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(deviceIdKey, deviceId);
