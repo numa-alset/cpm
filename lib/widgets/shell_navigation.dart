@@ -39,15 +39,15 @@ class _ShellNavigationState extends State<ShellNavigation> {
   String _titleForIndex(int index) {
     switch (index) {
       case 0:
-        return 'Designer-24';
+        return 'الجدولة';
       case 1:
-        return 'Shop All';
+        return 'المدفوعات';
       case 2:
-        return 'Favourite';
+        return 'المستخدمين';
       case 3:
-        return 'Account';
+        return 'المنتجات';
       default:
-        return 'Designer-24';
+        return 'الجدولة';
     }
   }
 
@@ -75,15 +75,12 @@ class BottomNavigationWidget extends StatelessWidget {
       type: BottomNavigationBarType.fixed,
       currentIndex: currentIndex,
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'الجدولة'),
+        BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'الدفعات'),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'المستخدمين'),
         BottomNavigationBarItem(
-          icon: Icon(Icons.door_sliding_outlined),
-          label: 'Browse',
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favorites'),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          label: 'Profile',
+          icon: Icon(Icons.shopping_cart_outlined),
+          label: 'المنتجات',
         ),
       ],
       onTap: onTap,
