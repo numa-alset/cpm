@@ -19,7 +19,7 @@ class FatoraProductsDB {
 
     final result = await database.query(
       "fatora_products",
-      where: "fatoraUnified=? AND isDeleted=0",
+      where: "fatoraUnified=? AND deletedAt IS NULL",
       whereArgs: [unified],
     );
 
@@ -42,7 +42,7 @@ class FatoraProductsDB {
 
     return database.update(
       "fatora_products",
-      {"isDeleted": 1, "updatedAt": DateTime.now().toIso8601String()},
+      {"deletedAt": DateTime.now().millisecondsSinceEpoch, "updatedAt": DateTime.now().millisecondsSinceEpoch},
       where: "unified=?",
       whereArgs: [unified],
     );
@@ -67,7 +67,7 @@ class FatoraProductsDB {
 
     final result = await database.query(
       "fatora_products",
-      where: "isDeleted=0",
+      where: "deletedAt IS NULL",
       orderBy: "date DESC",
     );
 

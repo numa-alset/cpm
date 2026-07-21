@@ -17,9 +17,6 @@ abstract class BaseModel {
   /// Device that last modified this record
   final String deviceId;
 
-  /// Increment every update
-  final int syncVersion;
-
   /// Status
   final Status status;
 
@@ -30,7 +27,6 @@ abstract class BaseModel {
     required this.updatedAt,
     this.deletedAt,
     required this.deviceId,
-    required this.syncVersion,
     required this.status,
   });
 
@@ -44,7 +40,6 @@ abstract class BaseModel {
       "updatedAt": updatedAt,
       "deletedAt": deletedAt,
       "deviceId": deviceId,
-      "syncVersion": syncVersion,
       "status": status.value,
     };
   }

@@ -16,7 +16,7 @@ class PaymentDB {
 
     final result = await database.query(
       "payments",
-      where: "isDeleted=0",
+      where: "deletedAt IS NULL",
       orderBy: "date DESC",
     );
 
@@ -39,7 +39,7 @@ class PaymentDB {
 
     return database.update(
       "payments",
-      {"isDeleted": 1, "updatedAt": DateTime.now().toIso8601String()},
+      {"deletedAt": DateTime.now().millisecondsSinceEpoch, "updatedAt": DateTime.now().millisecondsSinceEpoch},
       where: "unified=?",
       whereArgs: [unified],
     );

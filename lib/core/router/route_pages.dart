@@ -7,6 +7,7 @@ class AppRouter {
   static const String productsPath = '/products';
   static const String settingPath = '/setting';
   static const String paymentPath = '/payment';
+  static const String testPath = '/test';
 }
 
 class AppRouterName {
@@ -18,4 +19,5 @@ class AppRouterName {
   static const String products = 'products';
   static const String setting = 'setting';
   static const String payment = 'payment';
+  static const String test = 'test';
 }

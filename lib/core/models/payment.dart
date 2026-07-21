@@ -2,27 +2,10 @@ import 'package:naji/core/models/enum_status.dart';
 
 import 'base_model.dart';
 
-enum PaymentMethod {
-  cash,
-  creditCard,
-  bankTransfer;
-
-  String get value => name;
-
-  static PaymentMethod fromString(String value) {
-    return PaymentMethod.values.firstWhere(
-      (e) => e.name == value,
-      orElse: () => PaymentMethod.cash,
-    );
-  }
-}
-
 class Payment extends BaseModel {
   final String userUnified;
   final double amount;
   final int date;
-  final PaymentMethod method;
-  final String? note;
 
   const Payment({
     super.id,
@@ -30,13 +13,10 @@ class Payment extends BaseModel {
     required this.userUnified,
     required this.amount,
     required this.date,
-    required this.method,
-    this.note,
     required super.createdAt,
     required super.updatedAt,
     super.deletedAt,
     required super.deviceId,
-    required super.syncVersion,
     required super.status,
   });
 
@@ -46,7 +26,6 @@ class Payment extends BaseModel {
     String? userUnified,
     double? amount,
     int? date,
-    PaymentMethod? method,
     String? note,
     int? createdAt,
     int? updatedAt,
@@ -61,13 +40,10 @@ class Payment extends BaseModel {
       userUnified: userUnified ?? this.userUnified,
       amount: amount ?? this.amount,
       date: date ?? this.date,
-      method: method ?? this.method,
-      note: note ?? this.note,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
       deviceId: deviceId ?? this.deviceId,
-      syncVersion: syncVersion ?? this.syncVersion,
       status: status ?? this.status,
     );
   }
@@ -78,8 +54,6 @@ class Payment extends BaseModel {
       "userUnified": userUnified,
       "amount": amount,
       "date": date,
-      "method": method.value,
-      "note": note,
     };
   }
 
@@ -90,13 +64,10 @@ class Payment extends BaseModel {
       userUnified: map["userUnified"] as String,
       amount: (map["amount"] as num).toDouble(),
       date: map["date"] as int,
-      method: PaymentMethod.fromString(map["method"] as String),
-      note: map["note"] as String?,
       createdAt: map["createdAt"] as int,
       updatedAt: map["updatedAt"] as int,
       deletedAt: map["deletedAt"] as int?,
       deviceId: map["deviceId"] as String,
-      syncVersion: map["syncVersion"] as int,
       status: Status.values.byName(map["status"] as String),
     );
   }

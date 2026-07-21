@@ -16,7 +16,7 @@ class ProductDB {
 
     final result = await database.query(
       "products",
-      where: "isDeleted=0",
+      where: "deletedAt IS NULL",
       orderBy: "name",
     );
 
@@ -39,7 +39,7 @@ class ProductDB {
 
     return database.update(
       "products",
-      {"isDeleted": 1, "updatedAt": DateTime.now().toIso8601String()},
+      {"deletedAt": DateTime.now().millisecondsSinceEpoch, "updatedAt": DateTime.now().millisecondsSinceEpoch},
       where: "unified=?",
       whereArgs: [unified],
     );

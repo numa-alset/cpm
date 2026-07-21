@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naji/core/dao/fatora_dao.dart';
 import 'package:naji/core/dao/fatora_product_dao.dart';
 import 'package:naji/core/dao/payment_dao.dart';
@@ -17,6 +18,7 @@ import 'package:naji/core/repositories/payment_repository.dart';
 import 'package:naji/core/repositories/product_repository.dart';
 // Repositories
 import 'package:naji/core/repositories/user_repository.dart';
+import 'package:naji/core/router/go_router.dart' as app_router;
 import 'package:naji/core/services/backup_service.dart';
 import 'package:naji/core/services/device_service.dart';
 import 'package:naji/core/services/import_service.dart';
@@ -36,6 +38,9 @@ Future<void> setupLocator() async {
   await db.database;
 
   getIt.registerSingleton(db);
+
+  // Register GoRouter
+  getIt.registerSingleton<GoRouter>(app_router.router);
 
   // Database helpers
   getIt.registerLazySingleton(() => UserDB());

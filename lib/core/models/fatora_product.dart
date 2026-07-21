@@ -8,7 +8,7 @@ class FatoraProduct extends BaseModel {
   final String productName;
   final double price;
   final double quantity;
-  final double total;
+  double get total => quantity * price;
 
   const FatoraProduct({
     super.id,
@@ -18,12 +18,10 @@ class FatoraProduct extends BaseModel {
     required this.productName,
     required this.price,
     required this.quantity,
-    required this.total,
     required super.createdAt,
     required super.updatedAt,
     super.deletedAt,
     required super.deviceId,
-    required super.syncVersion,
     required super.status,
   });
 
@@ -51,12 +49,10 @@ class FatoraProduct extends BaseModel {
       productName: productName ?? this.productName,
       price: price ?? this.price,
       quantity: quantity ?? this.quantity,
-      total: total ?? this.total,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
       deviceId: deviceId ?? this.deviceId,
-      syncVersion: syncVersion ?? this.syncVersion,
       status: status ?? this.status,
     );
   }
@@ -69,7 +65,6 @@ class FatoraProduct extends BaseModel {
       "productName": productName,
       "price": price,
       "quantity": quantity,
-      "total": total,
     };
   }
 
@@ -82,12 +77,10 @@ class FatoraProduct extends BaseModel {
       productName: map["productName"] as String,
       price: (map["price"] as num).toDouble(),
       quantity: (map["quantity"] as num).toDouble(),
-      total: (map["total"] as num).toDouble(),
       createdAt: map["createdAt"] as int,
       updatedAt: map["updatedAt"] as int,
       deletedAt: map["deletedAt"] as int?,
       deviceId: map["deviceId"] as String,
-      syncVersion: map["syncVersion"] as int,
       status: Status.values.byName(map["status"] as String),
     );
   }

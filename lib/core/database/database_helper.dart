@@ -52,7 +52,6 @@ CREATE TABLE users(
     deletedAt INTEGER,
 
     deviceId TEXT NOT NULL,
-    syncVersion INTEGER NOT NULL DEFAULT 1,
     status TEXT NOT NULL
 );
 """);
@@ -67,13 +66,14 @@ CREATE TABLE products(
     unified TEXT NOT NULL UNIQUE,
 
     name TEXT NOT NULL,
+    
+    price REAL NOT NULL DEFAULT 0,
 
     createdAt INTEGER NOT NULL,
     updatedAt INTEGER NOT NULL,
     deletedAt INTEGER,
 
     deviceId TEXT NOT NULL,
-    syncVersion INTEGER NOT NULL DEFAULT 1,
     status TEXT NOT NULL
 );
 """);
@@ -97,16 +97,19 @@ CREATE TABLE fatoras(
 
     type TEXT NOT NULL,
 
+    note TEXT,
+
     createdAt INTEGER NOT NULL,
     updatedAt INTEGER NOT NULL,
     deletedAt INTEGER,
 
     deviceId TEXT NOT NULL,
-    syncVersion INTEGER NOT NULL DEFAULT 1,
     status TEXT NOT NULL,
 
-    FOREIGN KEY(userUnified)
-    REFERENCES users(unified)
+   FOREIGN KEY(userUnified)
+REFERENCES users(unified)
+ON UPDATE CASCADE
+ON DELETE RESTRICT
 );
 """);
 
@@ -123,26 +126,29 @@ CREATE TABLE fatora_products(
 
     productUnified TEXT NOT NULL,
 
-    name TEXT NOT NULL,
+    productName TEXT NOT NULL,
     
-    status TEXT NOT NULL,
-
     price REAL NOT NULL,
 
-    amount REAL NOT NULL,
+    quantity REAL NOT NULL,
 
     createdAt INTEGER NOT NULL,
     updatedAt INTEGER NOT NULL,
     deletedAt INTEGER,
 
     deviceId TEXT NOT NULL,
-    syncVersion INTEGER NOT NULL DEFAULT 1,
 
-    FOREIGN KEY(fatoraUnified)
-    REFERENCES fatoras(unified),
+    status TEXT NOT NULL,
+UNIQUE(fatoraUnified, productUnified),
+FOREIGN KEY(fatoraUnified)
+REFERENCES fatoras(unified)
+ON UPDATE CASCADE
+ON DELETE CASCADE,
 
-    FOREIGN KEY(productUnified)
-    REFERENCES products(unified)
+FOREIGN KEY(productUnified)
+REFERENCES products(unified)
+ON UPDATE CASCADE
+ON DELETE RESTRICT
 );
 """);
 
@@ -168,10 +174,11 @@ CREATE TABLE payments(
     deletedAt INTEGER,
 
     deviceId TEXT NOT NULL,
-    syncVersion INTEGER NOT NULL DEFAULT 1,
 
     FOREIGN KEY(userUnified)
-    REFERENCES users(unified)
+REFERENCES users(unified)
+ON UPDATE CASCADE
+ON DELETE RESTRICT
 );
 """);
 

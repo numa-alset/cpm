@@ -15,7 +15,6 @@ class Product extends BaseModel {
     required super.updatedAt,
     super.deletedAt,
     required super.deviceId,
-    required super.syncVersion,
     required super.status,
   });
 
@@ -40,7 +39,6 @@ class Product extends BaseModel {
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
       deviceId: deviceId ?? this.deviceId,
-      syncVersion: syncVersion ?? this.syncVersion,
       status: status ?? this.status,
     );
   }
@@ -59,7 +57,6 @@ class Product extends BaseModel {
       updatedAt: map["updatedAt"] as int,
       deletedAt: map["deletedAt"] as int?,
       deviceId: map["deviceId"] as String,
-      syncVersion: map["syncVersion"] as int,
       status: Status.values.byName(map["status"] as String),
     );
   }

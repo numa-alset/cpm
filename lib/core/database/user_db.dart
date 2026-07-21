@@ -16,7 +16,7 @@ class UserDB {
 
     final result = await database.query(
       "users",
-      where: "isDeleted=0",
+      where: "deletedAt IS NULL",
       orderBy: "updatedAt DESC",
     );
 
@@ -52,7 +52,7 @@ class UserDB {
     final database = txn ?? await db.database;
     return await database.update(
       "users",
-      {"isDeleted": 1, "updatedAt": DateTime.now().toIso8601String()},
+      {"deletedAt": DateTime.now().millisecondsSinceEpoch, "updatedAt": DateTime.now().millisecondsSinceEpoch},
       where: "unified=?",
       whereArgs: [unified],
     );

@@ -6,6 +6,10 @@ import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Delete old database to refresh schema (dev only)
+  // await DatabaseHelper.instance.deleteDatabaseFile();
+
   await setupLocator();
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -26,8 +30,6 @@ class MyApp extends StatelessWidget {
           return Directionality(
             textDirection: TextDirection.rtl,
             child: MaterialApp.router(
-              locale: Locale('ar'),
-              supportedLocales: const [Locale('ar')],
               title: "Naji",
               routeInformationProvider:
                   getIt<GoRouter>().routeInformationProvider,

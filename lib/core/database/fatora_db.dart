@@ -16,7 +16,7 @@ class FatoraDB {
 
     final result = await database.query(
       "fatoras",
-      where: "isDeleted=0",
+      where: "deletedAt IS NULL",
       orderBy: "date DESC",
     );
 
@@ -39,7 +39,7 @@ class FatoraDB {
 
     return database.update(
       "fatoras",
-      {"isDeleted": 1, "updatedAt": DateTime.now().toIso8601String()},
+      {"deletedAt": DateTime.now().millisecondsSinceEpoch, "updatedAt": DateTime.now().millisecondsSinceEpoch},
       where: "unified=?",
       whereArgs: [unified],
     );
