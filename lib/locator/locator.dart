@@ -30,6 +30,7 @@ import 'package:naji/core/services/sync_service.dart';
 import 'package:naji/core/services/transaction_service.dart';
 import 'package:naji/core/services/user_service.dart';
 import 'package:naji/core/services/validation_service.dart';
+import 'package:naji/feat/users/controllers/users_controller.dart';
 
 final getIt = GetIt.instance;
 
@@ -81,6 +82,7 @@ Future<void> setupLocator() async {
   getIt.registerLazySingleton(
     () => UserService(getIt<UserRepository>(), getIt<TransactionService>()),
   );
+
   // IdService is static - no need to register an instance
   getIt.registerLazySingleton(
     () => StatisticsService(
@@ -107,4 +109,9 @@ Future<void> setupLocator() async {
   getIt.registerLazySingleton(() => BackupService());
   getIt.registerLazySingleton(() => ImportService());
   getIt.registerLazySingleton(() => SyncService());
+
+  // Controllers
+  getIt.registerFactory<UsersController>(
+    () => UsersController(getIt<UserService>()),
+  );
 }
