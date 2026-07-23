@@ -8,32 +8,32 @@ import 'base_dao.dart';
 class FatoraDAO extends BaseDAO<Fatora> {
   final FatoraDB fatoraDB = FatoraDB();
   @override
-  Future<int> insert(Fatora item, {Transaction? txn}) {
-    return fatoraDB.insert(item, txn: txn);
+  Future<int> insert(Fatora item, Transaction txn) {
+    return fatoraDB.insert(item, txn);
   }
 
   @override
-  Future<int> update(Fatora item, {Transaction? txn}) async {
+  Future<int> update(Fatora item, Transaction txn) async {
     return fatoraDB.update(item, txn);
   }
 
   @override
-  Future<int> softDelete(String unified, {Transaction? txn}) {
+  Future<int> softDelete(String unified, Transaction txn) {
     return fatoraDB.delete(unified, txn);
   }
 
   @override
-  Future<Fatora?> getByUnified(String unified, {Transaction? txn}) {
-    return fatoraDB.get(unified);
+  Future<Fatora?> getByUnified(String unified, Transaction txn) {
+    return fatoraDB.get(unified, txn);
   }
 
   @override
-  Future<List<Fatora>> getAll({Transaction? txn}) {
-    return fatoraDB.getAll(txn: txn);
+  Future<List<Fatora>> getAll(Transaction txn) {
+    return fatoraDB.getAll(txn);
   }
 
-  Future<List<Fatora>> getByUser(String userUnified) {
-    final allFatoras = fatoraDB.getAll();
+  Future<List<Fatora>> getByUser(String userUnified, Transaction txn) {
+    final allFatoras = fatoraDB.getAll(txn);
     final filteres = allFatoras.then(
       (fatoras) =>
           fatoras.where((fatora) => fatora.userUnified == userUnified).toList(),
@@ -41,8 +41,12 @@ class FatoraDAO extends BaseDAO<Fatora> {
     return filteres;
   }
 
-  Future<List<Fatora>> getBetweenDates(int startDate, int endDate) {
-    final allFatoras = fatoraDB.getAll();
+  Future<List<Fatora>> getBetweenDates(
+    int startDate,
+    int endDate,
+    Transaction txn,
+  ) {
+    final allFatoras = fatoraDB.getAll(txn);
     final filteres = allFatoras.then(
       (fatoras) => fatoras
           .where(
@@ -53,8 +57,8 @@ class FatoraDAO extends BaseDAO<Fatora> {
     return filteres;
   }
 
-  Future<List<Fatora>> getSellInvoices() {
-    final allFatoras = fatoraDB.getAll();
+  Future<List<Fatora>> getSellInvoices(Transaction txn) {
+    final allFatoras = fatoraDB.getAll(txn);
     final filteres = allFatoras.then(
       (fatoras) =>
           fatoras.where((fatora) => fatora.type == InvoiceType.sale).toList(),
@@ -62,8 +66,8 @@ class FatoraDAO extends BaseDAO<Fatora> {
     return filteres;
   }
 
-  Future<List<Fatora>> getBuyInvoices() {
-    final allFatoras = fatoraDB.getAll();
+  Future<List<Fatora>> getBuyInvoices(Transaction txn) {
+    final allFatoras = fatoraDB.getAll(txn);
     final filteres = allFatoras.then(
       (fatoras) => fatoras
           .where((fatora) => fatora.type == InvoiceType.purchase)
@@ -72,8 +76,8 @@ class FatoraDAO extends BaseDAO<Fatora> {
     return filteres;
   }
 
-  Future<double> calculateTotalSell() {
-    final allFatoras = fatoraDB.getAll();
+  Future<double> calculateTotalSell(Transaction txn) {
+    final allFatoras = fatoraDB.getAll(txn);
     final filteres = allFatoras.then(
       (fatoras) =>
           fatoras.where((fatora) => fatora.type == InvoiceType.sale).toList(),
@@ -84,8 +88,8 @@ class FatoraDAO extends BaseDAO<Fatora> {
     return total;
   }
 
-  Future<double> calculateTotalBuy() {
-    final allFatoras = fatoraDB.getAll();
+  Future<double> calculateTotalBuy(Transaction txn) {
+    final allFatoras = fatoraDB.getAll(txn);
     final filteres = allFatoras.then(
       (fatoras) => fatoras
           .where((fatora) => fatora.type == InvoiceType.purchase)
@@ -98,8 +102,8 @@ class FatoraDAO extends BaseDAO<Fatora> {
   }
 
   @override
-  Future<List<Fatora>> getNotScheduled({Transaction? txn}) {
-    final allFatoras = fatoraDB.getAll();
+  Future<List<Fatora>> getNotScheduled(Transaction txn) {
+    final allFatoras = fatoraDB.getAll(txn);
     final filteres = allFatoras.then(
       (fatoras) => fatoras
           .where((fatora) => fatora.status == Status.notScheduled)

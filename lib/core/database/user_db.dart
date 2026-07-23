@@ -6,13 +6,13 @@ import 'database_helper.dart';
 class UserDB {
   final db = DatabaseHelper.instance;
 
-  Future<int> insert(User user, Transaction? txn) async {
-    final database = txn ?? await db.database;
+  Future<int> insert(User user, Transaction txn) async {
+    final database = txn;
     return await database.insert("users", user.toMap());
   }
 
-  Future<List<User>> getAll({Transaction? txn}) async {
-    final database = txn ?? await db.database;
+  Future<List<User>> getAll(Transaction txn) async {
+    final database = txn;
 
     final result = await database.query(
       "users",
@@ -23,8 +23,8 @@ class UserDB {
     return result.map((e) => User.fromMap(e)).toList();
   }
 
-  Future<User?> get(String unified) async {
-    final database = await db.database;
+  Future<User?> get(String unified, Transaction txn) async {
+    final database = txn;
 
     final result = await database.query(
       "users",
@@ -37,8 +37,8 @@ class UserDB {
     return User.fromMap(result.first);
   }
 
-  Future<int> update(User user, Transaction? txn) async {
-    final database = txn ?? await db.database;
+  Future<int> update(User user, Transaction txn) async {
+    final database = txn;
 
     return await database.update(
       "users",
@@ -48,18 +48,21 @@ class UserDB {
     );
   }
 
-  Future<int> delete(String unified, Transaction? txn) async {
-    final database = txn ?? await db.database;
+  Future<int> delete(String unified, Transaction txn) async {
+    final database = txn;
     return await database.update(
       "users",
-      {"deletedAt": DateTime.now().millisecondsSinceEpoch, "updatedAt": DateTime.now().millisecondsSinceEpoch},
+      {
+        "deletedAt": DateTime.now().millisecondsSinceEpoch,
+        "updatedAt": DateTime.now().millisecondsSinceEpoch,
+      },
       where: "unified=?",
       whereArgs: [unified],
     );
   }
 
-  Future<List<User>> getUnsynced({Transaction? txn}) async {
-    final database = txn ?? await db.database;
+  Future<List<User>> getUnsynced(Transaction txn) async {
+    final database = txn;
 
     final result = await database.query(
       "users",

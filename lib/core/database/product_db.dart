@@ -6,13 +6,13 @@ import 'database_helper.dart';
 class ProductDB {
   final db = DatabaseHelper.instance;
 
-  Future<int> insert(Product product, {Transaction? txn}) async {
-    final database = txn ?? await db.database;
+  Future<int> insert(Product product, Transaction txn) async {
+    final database = txn;
     return database.insert("products", product.toMap());
   }
 
-  Future<List<Product>> getAll({Transaction? txn}) async {
-    final database = txn ?? await db.database;
+  Future<List<Product>> getAll(Transaction txn) async {
+    final database = txn;
 
     final result = await database.query(
       "products",
@@ -23,8 +23,8 @@ class ProductDB {
     return result.map((e) => Product.fromMap(e)).toList();
   }
 
-  Future<int> update(Product product, Transaction? txn) async {
-    final database = txn ?? await db.database;
+  Future<int> update(Product product, Transaction txn) async {
+    final database = txn;
 
     return database.update(
       "products",
@@ -34,19 +34,22 @@ class ProductDB {
     );
   }
 
-  Future<int> delete(String unified, Transaction? txn) async {
+  Future<int> delete(String unified, Transaction txn) async {
     final database = txn ?? await db.database;
 
     return database.update(
       "products",
-      {"deletedAt": DateTime.now().millisecondsSinceEpoch, "updatedAt": DateTime.now().millisecondsSinceEpoch},
+      {
+        "deletedAt": DateTime.now().millisecondsSinceEpoch,
+        "updatedAt": DateTime.now().millisecondsSinceEpoch,
+      },
       where: "unified=?",
       whereArgs: [unified],
     );
   }
 
-  Future<Product?> get(String unified) async {
-    final database = await db.database;
+  Future<Product?> get(String unified, Transaction txn) async {
+    final database = txn;
 
     final result = await database.query(
       "products",
@@ -59,8 +62,8 @@ class ProductDB {
     return Product.fromMap(result.first);
   }
 
-  Future<List<Product>> getUnsynced({Transaction? txn}) async {
-    final database = txn ?? await db.database;
+  Future<List<Product>> getUnsynced(Transaction txn) async {
+    final database = txn;
 
     final result = await database.query(
       "products",

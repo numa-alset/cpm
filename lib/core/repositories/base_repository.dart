@@ -1,13 +1,15 @@
+import 'package:sqflite/sqflite.dart';
+
 abstract class BaseRepository<T> {
-  Future<int> create(T item);
+  Future<int> create(T item, Transaction txn);
 
-  Future<int> update(T item);
+  Future<int> update(T item, Transaction txn);
 
-  Future<int> delete(String unified);
+  Future<int> delete(String unified, Transaction txn);
 
-  Future<T?> get(String unified);
+  Future<T?> get(String unified, Transaction txn);
 
-  Future<List<T>> getAll();
+  Future<List<T>> getAll(Transaction txn);
 
-  Future<List<T>> getNotScheduled();
+  Future<List<T>> getNotScheduled(Transaction txn);
 }

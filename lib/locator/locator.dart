@@ -90,6 +90,7 @@ Future<void> setupLocator() async {
       getIt<PaymentRepository>(),
       getIt<UserRepository>(),
       getIt<FatoraProductRepository>(),
+      getIt<TransactionService>(),
     ),
   );
   getIt.registerLazySingleton(() => DeviceService());

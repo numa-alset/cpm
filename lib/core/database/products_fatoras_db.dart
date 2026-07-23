@@ -6,16 +6,16 @@ import 'database_helper.dart';
 class FatoraProductsDB {
   final db = DatabaseHelper.instance;
 
-  Future<int> insert(FatoraProduct item, {Transaction? txn}) async {
-    final database = txn ?? await db.database;
+  Future<int> insert(FatoraProduct item, Transaction txn) async {
+    final database = txn;
     return database.insert("fatora_products", item.toMap());
   }
 
   Future<List<FatoraProduct>> getByFatora(
-    String unified, {
-    Transaction? txn,
-  }) async {
-    final database = txn ?? await db.database;
+    String unified,
+    Transaction txn,
+  ) async {
+    final database = txn;
 
     final result = await database.query(
       "fatora_products",
@@ -26,8 +26,8 @@ class FatoraProductsDB {
     return result.map((e) => FatoraProduct.fromMap(e)).toList();
   }
 
-  Future<int> update(FatoraProduct item, Transaction? txn) async {
-    final database = txn ?? await db.database;
+  Future<int> update(FatoraProduct item, Transaction txn) async {
+    final database = txn;
 
     return database.update(
       "fatora_products",
@@ -37,19 +37,22 @@ class FatoraProductsDB {
     );
   }
 
-  Future<int> delete(String unified, Transaction? txn) async {
-    final database = txn ?? await db.database;
+  Future<int> delete(String unified, Transaction txn) async {
+    final database = txn;
 
     return database.update(
       "fatora_products",
-      {"deletedAt": DateTime.now().millisecondsSinceEpoch, "updatedAt": DateTime.now().millisecondsSinceEpoch},
+      {
+        "deletedAt": DateTime.now().millisecondsSinceEpoch,
+        "updatedAt": DateTime.now().millisecondsSinceEpoch,
+      },
       where: "unified=?",
       whereArgs: [unified],
     );
   }
 
-  Future<FatoraProduct?> get(String unified) async {
-    final database = await db.database;
+  Future<FatoraProduct?> get(String unified, Transaction txn) async {
+    final database = txn;
 
     final result = await database.query(
       "fatora_products",
@@ -62,8 +65,8 @@ class FatoraProductsDB {
     return FatoraProduct.fromMap(result.first);
   }
 
-  Future<List<FatoraProduct>> getAll() async {
-    final database = await db.database;
+  Future<List<FatoraProduct>> getAll(Transaction txn) async {
+    final database = txn;
 
     final result = await database.query(
       "fatora_products",
@@ -74,8 +77,8 @@ class FatoraProductsDB {
     return result.map((e) => FatoraProduct.fromMap(e)).toList();
   }
 
-  Future<List<FatoraProduct>> getUnsynced({Transaction? txn}) async {
-    final database = txn ?? await db.database;
+  Future<List<FatoraProduct>> getUnsynced(Transaction txn) async {
+    final database = txn;
 
     final result = await database.query(
       "fatora_products",

@@ -4,10 +4,10 @@ import 'package:naji/core/models/fatora.dart';
 import 'package:naji/core/models/payment.dart';
 import 'package:naji/core/models/product.dart';
 import 'package:naji/core/models/user.dart';
-import 'package:naji/core/repositories/fatora_repository.dart';
-import 'package:naji/core/repositories/payment_repository.dart';
-import 'package:naji/core/repositories/product_repository.dart';
-import 'package:naji/core/repositories/user_repository.dart';
+import 'package:naji/core/services/invoice_service.dart';
+import 'package:naji/core/services/payment_service.dart';
+import 'package:naji/core/services/product_service.dart';
+import 'package:naji/core/services/user_service.dart';
 import 'package:naji/locator/locator.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,35 +18,35 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late final FatoraRepository _fatoraRepository;
-  late final UserRepository _userRepository;
-  late final PaymentRepository _paymentRepository;
-  late final ProductRepository _productRepository;
+  late final InvoiceService _fatoraServices;
+  late final UserService _userServices;
+  late final PaymentService _paymentServices;
+  late final ProductService _productServices;
 
   @override
   void initState() {
     super.initState();
-    _fatoraRepository = getIt<FatoraRepository>();
-    _userRepository = getIt<UserRepository>();
-    _paymentRepository = getIt<PaymentRepository>();
-    _productRepository = getIt<ProductRepository>();
+    _fatoraServices = getIt<InvoiceService>();
+    _userServices = getIt<UserService>();
+    _paymentServices = getIt<PaymentService>();
+    _productServices = getIt<ProductService>();
   }
 
   Future<Map<String, dynamic>> _getUnscheduledData() async {
-    final invoices = await _fatoraRepository.getNotScheduled();
-    final users = await _userRepository.getNotScheduled();
-    final payments = await _paymentRepository.getNotScheduled();
-    final products = await _productRepository.getNotScheduled();
+    final invoices = await _fatoraServices.getNotScheduledInvoices();
+    final users = await _userServices.getNotScheduledUsers();
+    final payments = await _paymentServices.getNotScheduledPayments();
+    final products = await _productServices.getNotScheduledProducts();
 
     final List<Map<String, dynamic>> invoicesWithUsers = [];
     for (var invoice in invoices) {
-      final user = await _userRepository.get(invoice.userUnified);
+      final user = await _userServices.getUser(invoice.userUnified);
       invoicesWithUsers.add({'invoice': invoice, 'user': user});
     }
 
     final List<Map<String, dynamic>> paymentsWithUsers = [];
     for (var payment in payments) {
-      final user = await _userRepository.get(payment.userUnified);
+      final user = await _userServices.getUser(payment.userUnified);
       paymentsWithUsers.add({'payment': payment, 'user': user});
     }
 

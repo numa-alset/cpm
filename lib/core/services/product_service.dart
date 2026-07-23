@@ -25,7 +25,7 @@ class ProductService {
         createdAt: DateTime.now().millisecondsSinceEpoch,
         updatedAt: DateTime.now().millisecondsSinceEpoch,
       );
-      await _productRepository.create(product, txn: txn);
+      await _productRepository.create(product, txn);
     });
   }
 
@@ -41,37 +41,49 @@ class ProductService {
       product = product.copyWith(
         updatedAt: DateTime.now().millisecondsSinceEpoch,
       );
-      await _productRepository.update(product, txn: txn);
+      await _productRepository.update(product, txn);
     });
   }
 
   Future<void> deleteProduct(String unified) async {
     await _transactionService.runTransaction((txn) async {
       // Update status to not scheduled before deletion
-      final product = await _productRepository.get(unified);
+      final product = await _productRepository.get(unified, txn);
       if (product == null) {
         throw Exception("Product not found");
       }
 
       await _productRepository.update(
         product.copyWith(status: Status.notScheduled),
-        txn: txn,
+        txn,
       );
 
-      await _productRepository.delete(unified, txn: txn);
+      await _productRepository.delete(unified, txn);
     });
   }
 
   Future<List<Product>> searchProducts(String keyword) async {
-    return await _productRepository.search(keyword);
+    return await _transactionService.runTransaction((txn) async {
+      return await _productRepository.search(keyword, txn);
+    });
   }
 
   Future<List<Product>> getAllProducts() async {
-    return await _productRepository.getAll();
+    return await _transactionService.runTransaction((txn) async {
+      return await _productRepository.getAll(txn);
+    });
   }
 
   Future<bool> exists(String unified) async {
-    return await _productRepository.exists(unified);
+    return await _transactionService.runTransaction((txn) async {
+      return await _productRepository.exists(unified, txn);
+    });
+  }
+
+  Future<List<Product>> getNotScheduledProducts() async {
+    return await _transactionService.runTransaction((txn) async {
+      return await _productRepository.getNotScheduled(txn);
+    });
   }
 
   String generateUUID() {

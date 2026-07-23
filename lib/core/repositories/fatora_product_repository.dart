@@ -10,34 +10,38 @@ class FatoraProductRepository extends BaseRepository<FatoraProduct> {
   FatoraProductRepository(this._invoiceItemDAO);
 
   @override
-  Future<int> create(FatoraProduct item, {Transaction? txn}) =>
-      _invoiceItemDAO.insert(item, txn: txn);
+  Future<int> create(FatoraProduct item, Transaction txn) =>
+      _invoiceItemDAO.insert(item, txn);
 
   @override
-  Future<int> update(FatoraProduct item, {Transaction? txn}) =>
-      _invoiceItemDAO.update(item, txn: txn);
+  Future<int> update(FatoraProduct item, Transaction txn) =>
+      _invoiceItemDAO.update(item, txn);
 
   @override
-  Future<int> delete(String unified, {Transaction? txn}) =>
-      _invoiceItemDAO.softDelete(unified, txn: txn);
+  Future<int> delete(String unified, Transaction txn) =>
+      _invoiceItemDAO.softDelete(unified, txn);
 
   @override
-  Future<FatoraProduct?> get(String unified, {Transaction? txn}) =>
-      _invoiceItemDAO.getByUnified(unified, txn: txn);
+  Future<FatoraProduct?> get(String unified, Transaction txn) =>
+      _invoiceItemDAO.getByUnified(unified, txn);
 
-  Future<List<FatoraProduct>> getByInvoice(String invoiceUnified) =>
-      _invoiceItemDAO.getByInvoice(invoiceUnified);
+  Future<List<FatoraProduct>> getByInvoice(
+    String invoiceUnified,
+    Transaction txn,
+  ) => _invoiceItemDAO.getByInvoice(invoiceUnified, txn);
 
-  Future<double> calculateInvoiceTotal(String invoiceUnified) =>
-      _invoiceItemDAO.calculateInvoiceTotal(invoiceUnified);
+  Future<double> calculateInvoiceTotal(
+    String invoiceUnified,
+    Transaction txn,
+  ) => _invoiceItemDAO.calculateInvoiceTotal(invoiceUnified, txn);
 
   @override
-  Future<List<FatoraProduct>> getAll() {
-    return _invoiceItemDAO.getAll();
+  Future<List<FatoraProduct>> getAll(Transaction txn) {
+    return _invoiceItemDAO.getAll(txn);
   }
 
   @override
-  Future<List<FatoraProduct>> getNotScheduled() {
-    return _invoiceItemDAO.getNotScheduled();
+  Future<List<FatoraProduct>> getNotScheduled(Transaction txn) {
+    return _invoiceItemDAO.getNotScheduled(txn);
   }
 }

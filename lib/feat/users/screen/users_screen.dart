@@ -28,8 +28,6 @@ class _UsersView extends StatelessWidget {
     final controller = context.watch<UsersController>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text("المستخدمون"), centerTitle: true),
-
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.person_add),
         label: const Text("إضافة"),
@@ -42,11 +40,11 @@ class _UsersView extends StatelessWidget {
           );
 
           if (refresh == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("تمت إضافة المستخدم")),
-          );
-        }
-      },
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text("تمت إضافة المستخدم")));
+          }
+        },
       ),
 
       body: RefreshIndicator(
@@ -214,7 +212,9 @@ class _UsersView extends StatelessWidget {
 
                           if (refresh == true) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("تم تحديث المستخدم")),
+                              const SnackBar(
+                                content: Text("تم تحديث المستخدم"),
+                              ),
                             );
                           }
                         },

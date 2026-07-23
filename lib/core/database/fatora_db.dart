@@ -6,13 +6,13 @@ import 'database_helper.dart';
 class FatoraDB {
   final db = DatabaseHelper.instance;
 
-  Future<int> insert(Fatora fatora, {Transaction? txn}) async {
-    final database = txn ?? await db.database;
+  Future<int> insert(Fatora fatora, Transaction txn) async {
+    final database = txn;
     return database.insert("fatoras", fatora.toMap());
   }
 
-  Future<List<Fatora>> getAll({Transaction? txn}) async {
-    final database = txn ?? await db.database;
+  Future<List<Fatora>> getAll(Transaction txn) async {
+    final database = txn;
 
     final result = await database.query(
       "fatoras",
@@ -23,8 +23,8 @@ class FatoraDB {
     return result.map((e) => Fatora.fromMap(e)).toList();
   }
 
-  Future<int> update(Fatora fatora, Transaction? txn) async {
-    final database = txn ?? await db.database;
+  Future<int> update(Fatora fatora, Transaction txn) async {
+    final database = txn;
 
     return database.update(
       "fatoras",
@@ -34,19 +34,22 @@ class FatoraDB {
     );
   }
 
-  Future<int> delete(String unified, Transaction? txn) async {
-    final database = txn ?? await db.database;
+  Future<int> delete(String unified, Transaction txn) async {
+    final database = txn;
 
     return database.update(
       "fatoras",
-      {"deletedAt": DateTime.now().millisecondsSinceEpoch, "updatedAt": DateTime.now().millisecondsSinceEpoch},
+      {
+        "deletedAt": DateTime.now().millisecondsSinceEpoch,
+        "updatedAt": DateTime.now().millisecondsSinceEpoch,
+      },
       where: "unified=?",
       whereArgs: [unified],
     );
   }
 
-  Future<Fatora?> get(String unified) async {
-    final database = await db.database;
+  Future<Fatora?> get(String unified, Transaction txn) async {
+    final database = txn;
 
     final result = await database.query(
       "fatoras",
@@ -59,8 +62,8 @@ class FatoraDB {
     return Fatora.fromMap(result.first);
   }
 
-  Future<List<Fatora>> getUnsynced({Transaction? txn}) async {
-    final database = txn ?? await db.database;
+  Future<List<Fatora>> getUnsynced(Transaction txn) async {
+    final database = txn;
 
     final result = await database.query(
       "fatoras",

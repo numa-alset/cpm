@@ -10,36 +10,34 @@ class UserRepository extends BaseRepository<User> {
   UserRepository(this._userDAO);
 
   @override
-  Future<int> create(User user, {Transaction? txn}) =>
-      _userDAO.insert(user, txn: txn);
+  Future<int> create(User user, Transaction txn) => _userDAO.insert(user, txn);
 
   @override
-  Future<int> update(User user, {Transaction? txn}) =>
-      _userDAO.update(user, txn: txn);
+  Future<int> update(User user, Transaction txn) => _userDAO.update(user, txn);
 
   @override
-  Future<int> delete(String unified, {Transaction? txn}) =>
-      _userDAO.softDelete(unified, txn: txn);
+  Future<int> delete(String unified, Transaction txn) =>
+      _userDAO.softDelete(unified, txn);
 
   @override
-  Future<User?> get(String unified, {Transaction? txn}) =>
-      _userDAO.getByUnified(unified, txn: txn);
+  Future<User?> get(String unified, Transaction txn) =>
+      _userDAO.getByUnified(unified, txn);
+  Future<List<User>> getAll(Transaction txn) => _userDAO.getAll(txn);
 
-  @override
-  Future<List<User>> getAll() => _userDAO.getAll();
+  Future<List<User>> getBuyers(Transaction txn) => _userDAO.getBuyers(txn);
 
-  Future<List<User>> getBuyers() => _userDAO.getBuyers();
+  Future<List<User>> getSellers(Transaction txn) => _userDAO.getSellers(txn);
 
-  Future<List<User>> getSellers() => _userDAO.getSellers();
+  Future<List<User>> search(String keyword, Transaction txn) =>
+      _userDAO.search(keyword, txn);
+  Future<bool> isExist(String keyword, Transaction txn) =>
+      _userDAO.isExist(keyword, txn);
 
-  Future<List<User>> search(String keyword) => _userDAO.search(keyword);
-  Future<bool> isExist(String keyword) => _userDAO.isExist(keyword);
-
-  Future<int> changeBalance(String unified, double total, Transaction? txn) =>
+  Future<int> changeBalance(String unified, double total, Transaction txn) =>
       _userDAO.updateBalance(unified, total, txn);
 
   @override
-  Future<List<User>> getNotScheduled() {
-    return _userDAO.getNotScheduled();
+  Future<List<User>> getNotScheduled(Transaction txn) {
+    return _userDAO.getNotScheduled(txn);
   }
 }

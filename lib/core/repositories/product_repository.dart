@@ -10,32 +10,34 @@ class ProductRepository extends BaseRepository<Product> {
   ProductRepository(this._productDAO);
 
   @override
-  Future<int> create(Product product, {Transaction? txn}) =>
-      _productDAO.insert(product, txn: txn);
+  Future<int> create(Product product, Transaction txn) =>
+      _productDAO.insert(product, txn);
 
   @override
-  Future<int> update(Product product, {Transaction? txn}) =>
-      _productDAO.update(product, txn: txn);
+  Future<int> update(Product product, Transaction txn) =>
+      _productDAO.update(product, txn);
 
   @override
-  Future<int> delete(String unified, {Transaction? txn}) =>
-      _productDAO.softDelete(unified, txn: txn);
+  Future<int> delete(String unified, Transaction txn) =>
+      _productDAO.softDelete(unified, txn);
 
   @override
-  Future<Product?> get(String unified, {Transaction? txn}) =>
-      _productDAO.getByUnified(unified, txn: txn);
+  Future<Product?> get(String unified, Transaction txn) =>
+      _productDAO.getByUnified(unified, txn);
 
   @override
-  Future<List<Product>> getAll() => _productDAO.getAll();
+  Future<List<Product>> getAll(Transaction txn) => _productDAO.getAll(txn);
 
-  Future<List<Product>> search(String keyword) => _productDAO.search(keyword);
+  Future<List<Product>> search(String keyword, Transaction txn) =>
+      _productDAO.search(keyword, txn);
 
-  Future<bool> exists(String unified) => _productDAO.exists(unified);
+  Future<bool> exists(String unified, Transaction txn) =>
+      _productDAO.exists(unified, txn);
 
-  Future<int> count() => _productDAO.count();
+  Future<int> count(Transaction txn) => _productDAO.count(txn);
 
   @override
-  Future<List<Product>> getNotScheduled() {
-    return _productDAO.getNotScheduled();
+  Future<List<Product>> getNotScheduled(Transaction txn) {
+    return _productDAO.getNotScheduled(txn);
   }
 }

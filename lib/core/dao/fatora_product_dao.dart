@@ -9,32 +9,35 @@ class FatoraProductDAO extends BaseDAO<FatoraProduct> {
   final FatoraProductsDB fatoraProductDB = FatoraProductsDB();
 
   @override
-  Future<int> insert(FatoraProduct item, {Transaction? txn}) {
-    return fatoraProductDB.insert(item, txn: txn);
+  Future<int> insert(FatoraProduct item, Transaction txn) {
+    return fatoraProductDB.insert(item, txn);
   }
 
   @override
-  Future<int> update(FatoraProduct item, {Transaction? txn}) {
+  Future<int> update(FatoraProduct item, Transaction txn) {
     return fatoraProductDB.update(item, txn);
   }
 
   @override
-  Future<int> softDelete(String unified, {Transaction? txn}) {
+  Future<int> softDelete(String unified, Transaction txn) {
     return fatoraProductDB.delete(unified, txn);
   }
 
   @override
-  Future<FatoraProduct?> getByUnified(String unified, {Transaction? txn}) {
-    return fatoraProductDB.get(unified);
+  Future<FatoraProduct?> getByUnified(String unified, Transaction txn) {
+    return fatoraProductDB.get(unified, txn);
   }
 
   @override
-  Future<List<FatoraProduct>> getAll({Transaction? txn}) {
-    return fatoraProductDB.getAll();
+  Future<List<FatoraProduct>> getAll(Transaction txn) {
+    return fatoraProductDB.getAll(txn);
   }
 
-  Future<List<FatoraProduct>> getByInvoice(String fatoraUnified) {
-    final allFatoraProducts = fatoraProductDB.getAll();
+  Future<List<FatoraProduct>> getByInvoice(
+    String fatoraUnified,
+    Transaction txn,
+  ) {
+    final allFatoraProducts = fatoraProductDB.getAll(txn);
     final filtered = allFatoraProducts.then(
       (products) => products
           .where((product) => product.fatoraUnified == fatoraUnified)
@@ -43,8 +46,8 @@ class FatoraProductDAO extends BaseDAO<FatoraProduct> {
     return filtered;
   }
 
-  Future<double> calculateInvoiceTotal(String fatoraUnified) {
-    final allFatoraProducts = getByInvoice(fatoraUnified);
+  Future<double> calculateInvoiceTotal(String fatoraUnified, Transaction txn) {
+    final allFatoraProducts = getByInvoice(fatoraUnified, txn);
     final total = allFatoraProducts.then(
       (products) => products.fold(0.0, (sum, product) => sum + product.total),
     );
@@ -52,8 +55,8 @@ class FatoraProductDAO extends BaseDAO<FatoraProduct> {
   }
 
   @override
-  Future<List<FatoraProduct>> getNotScheduled({Transaction? txn}) {
-    final allFatoras = fatoraProductDB.getAll();
+  Future<List<FatoraProduct>> getNotScheduled(Transaction txn) {
+    final allFatoras = fatoraProductDB.getAll(txn);
     final filteres = allFatoras.then(
       (fatoras) => fatoras
           .where((fatora) => fatora.status == Status.notScheduled)

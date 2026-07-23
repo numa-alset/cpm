@@ -7,12 +7,14 @@ import 'package:naji/core/database/payment_db.dart';
 import 'package:naji/core/database/product_db.dart';
 import 'package:naji/core/database/products_fatoras_db.dart';
 import 'package:naji/core/database/user_db.dart';
+import 'package:naji/core/services/transaction_service.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database/database_helper.dart';
+import '../models/fatora_product.dart';
 
 class BackupService {
   static final String backupFolderName = "naji_backup";
@@ -22,6 +24,7 @@ class BackupService {
   final FatoraDB _fatoraDB = FatoraDB();
   final PaymentDB _paymentDB = PaymentDB();
   final FatoraProductsDB _fatoraProductsDB = FatoraProductsDB();
+  final TransactionService _transactionService = TransactionService();
 
   /// Export everything to JSON
   Future<File> exportJson() async {
@@ -34,22 +37,45 @@ class BackupService {
       ),
     );
 
-    final backup = {
-      "createdAt": DateTime.now().toIso8601String(),
-      "version": 1,
+    // Use a DB transaction to take a consistent snapshot of all tables
 
-      "users": (await _userDB.getAll()).map((e) => e.toMap()).toList(),
+    final backup = await _transactionService.runTransaction((txn) async {
+      final users = (await _userDB.getAll(txn)).map((e) => e.toMap()).toList();
 
-      "products": (await _productDB.getAll()).map((e) => e.toMap()).toList(),
+      final products = (await _productDB.getAll(
+        txn,
+      )).map((e) => e.toMap()).toList();
 
-      "fatoras": (await _fatoraDB.getAll()).map((e) => e.toMap()).toList(),
+      final fatoras = (await _fatoraDB.getAll(
+        txn,
+      )).map((e) => e.toMap()).toList();
 
-      "payments": (await _paymentDB.getAll()).map((e) => e.toMap()).toList(),
+      final payments = (await _paymentDB.getAll(
+        txn,
+      )).map((e) => e.toMap()).toList();
 
-      "fatoraProducts": (await _fatoraProductsDB.getAll())
-          .map((e) => e.toMap())
-          .toList(),
-    };
+      // fatora_products DB helper does not expose a txn-aware getAll, query directly on txn
+      final fpResult = await txn.query(
+        'fatora_products',
+        where: 'deletedAt IS NULL',
+        orderBy: 'date DESC',
+      );
+
+      final fatoraProducts = fpResult
+          .map((e) => FatoraProduct.fromMap(e).toMap())
+          .toList();
+
+      return {
+        "createdAt": DateTime.now().toIso8601String(),
+        "version": 1,
+
+        "users": users,
+        "products": products,
+        "fatoras": fatoras,
+        "payments": payments,
+        "fatoraProducts": fatoraProducts,
+      };
+    });
 
     await file.writeAsString(
       const JsonEncoder.withIndent("  ").convert(backup),
@@ -115,26 +141,38 @@ class BackupService {
       join(dir.path, 'unsynced_${DateTime.now().millisecondsSinceEpoch}.json'),
     );
 
-    final backup = {
-      "createdAt": DateTime.now().toIso8601String(),
-      "version": 1,
+    final backup = await _transactionService.runTransaction((txn) async {
+      final users = (await _userDB.getUnsynced(
+        txn,
+      )).map((e) => e.toMap()).toList();
 
-      "users": (await _userDB.getUnsynced()).map((e) => e.toMap()).toList(),
+      final products = (await _productDB.getUnsynced(
+        txn,
+      )).map((e) => e.toMap()).toList();
 
-      "products": (await _productDB.getUnsynced())
-          .map((e) => e.toMap())
-          .toList(),
+      final fatoras = (await _fatoraDB.getUnsynced(
+        txn,
+      )).map((e) => e.toMap()).toList();
 
-      "fatoras": (await _fatoraDB.getUnsynced()).map((e) => e.toMap()).toList(),
+      final payments = (await _paymentDB.getUnsynced(
+        txn,
+      )).map((e) => e.toMap()).toList();
 
-      "payments": (await _paymentDB.getUnsynced())
-          .map((e) => e.toMap())
-          .toList(),
+      final fatoraProducts = (await _fatoraProductsDB.getUnsynced(
+        txn,
+      )).map((e) => e.toMap()).toList();
 
-      "fatoraProducts": (await _fatoraProductsDB.getUnsynced())
-          .map((e) => e.toMap())
-          .toList(),
-    };
+      return {
+        "createdAt": DateTime.now().toIso8601String(),
+        "version": 1,
+
+        "users": users,
+        "products": products,
+        "fatoras": fatoras,
+        "payments": payments,
+        "fatoraProducts": fatoraProducts,
+      };
+    });
 
     await file.writeAsString(
       const JsonEncoder.withIndent("  ").convert(backup),
@@ -153,58 +191,68 @@ class BackupService {
     final file = File(
       join(
         dir.path,
-        '${backupFolderName}_${type}_${unified}_${DateTime.now().millisecondsSinceEpoch}.json',
+        '${backupFolderName}_${type}_$unified'
+        '_${DateTime.now().millisecondsSinceEpoch}.json',
       ),
     );
 
-    final backup = {
-      "createdAt": DateTime.now().toIso8601String(),
-      "version": 1,
+    final backup = await _transactionService.runTransaction((txn) async {
+      final result = <String, dynamic>{
+        "createdAt": DateTime.now().toIso8601String(),
+        "version": 1,
+        "users": <dynamic>[],
+        "products": <dynamic>[],
+        "fatoras": <dynamic>[],
+        "payments": <dynamic>[],
+        "fatoraProducts": <dynamic>[],
+      };
 
-      "users": <dynamic>[],
-      "products": <dynamic>[],
-      "fatoras": <dynamic>[],
-      "payments": <dynamic>[],
-      "fatoraProducts": <dynamic>[],
-    };
+      switch (type.toLowerCase()) {
+        case 'user':
+        case 'users':
+          final user = await _userDB.get(unified, txn);
+          if (user != null) {
+            result["users"] = [user.toMap()];
+          }
+          break;
 
-    switch (type) {
-      case 'user':
-      case 'users':
-        final u = await _userDB.get(unified);
-        if (u != null) backup['users'] = [u.toMap()];
-        break;
+        case 'product':
+        case 'products':
+          final product = await _productDB.get(unified, txn);
+          if (product != null) {
+            result["products"] = [product.toMap()];
+          }
+          break;
 
-      case 'product':
-      case 'products':
-        final p = await _productDB.get(unified);
-        if (p != null) backup['products'] = [p.toMap()];
-        break;
+        case 'fatora':
+        case 'fatoras':
+        case 'invoice':
+          final fatora = await _fatoraDB.get(unified, txn);
+          if (fatora != null) {
+            result["fatoras"] = [fatora.toMap()];
+          }
+          break;
 
-      case 'fatora':
-      case 'fatoras':
-      case 'invoice':
-        final f = await _fatoraDB.get(unified);
-        if (f != null) backup['fatoras'] = [f.toMap()];
-        break;
+        case 'payment':
+        case 'payments':
+          final payment = await _paymentDB.get(unified, txn);
+          if (payment != null) {
+            result["payments"] = [payment.toMap()];
+          }
+          break;
 
-      case 'payment':
-      case 'payments':
-        final pay = await _paymentDB.get(unified);
-        if (pay != null) backup['payments'] = [pay.toMap()];
-        break;
+        case 'fatoraproduct':
+        case 'fatora_products':
+        case 'fatoraproducts':
+          final fp = await _fatoraProductsDB.get(unified, txn);
+          if (fp != null) {
+            result["fatoraProducts"] = [fp.toMap()];
+          }
+          break;
+      }
 
-      case 'fatoraProduct':
-      case 'fatora_products':
-      case 'fatoraproduct':
-        final fp = await _fatoraProductsDB.get(unified);
-        if (fp != null) backup['fatoraProducts'] = [fp.toMap()];
-        break;
-
-      default:
-        // Unknown type: produce empty backup
-        break;
-    }
+      return result;
+    });
 
     await file.writeAsString(
       const JsonEncoder.withIndent("  ").convert(backup),

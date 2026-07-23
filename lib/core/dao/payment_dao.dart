@@ -9,32 +9,32 @@ class PaymentDAO extends BaseDAO<Payment> {
   final PaymentDB paymentDB = PaymentDB();
 
   @override
-  Future<int> insert(Payment item, {Transaction? txn}) {
-    return paymentDB.insert(item, txn: txn);
+  Future<int> insert(Payment item, Transaction txn) {
+    return paymentDB.insert(item, txn);
   }
 
   @override
-  Future<int> update(Payment item, {Transaction? txn}) {
+  Future<int> update(Payment item, Transaction txn) {
     return paymentDB.update(item, txn);
   }
 
   @override
-  Future<int> softDelete(String unified, {Transaction? txn}) {
+  Future<int> softDelete(String unified, Transaction txn) {
     return paymentDB.delete(unified, txn);
   }
 
   @override
-  Future<Payment?> getByUnified(String unified, {Transaction? txn}) {
-    return paymentDB.get(unified);
+  Future<Payment?> getByUnified(String unified, Transaction txn) {
+    return paymentDB.get(unified, txn);
   }
 
   @override
-  Future<List<Payment>> getAll({Transaction? txn}) {
-    return paymentDB.getAll(txn: txn);
+  Future<List<Payment>> getAll(Transaction txn) {
+    return paymentDB.getAll(txn);
   }
 
-  Future<List<Payment>> getByUser(String userUnified) {
-    final allPayments = paymentDB.getAll();
+  Future<List<Payment>> getByUser(String userUnified, Transaction txn) {
+    final allPayments = paymentDB.getAll(txn);
     final filtered = allPayments.then(
       (payments) => payments
           .where((payment) => payment.userUnified == userUnified)
@@ -43,8 +43,12 @@ class PaymentDAO extends BaseDAO<Payment> {
     return filtered;
   }
 
-  Future<List<Payment>> getBetweenDates(int startDate, int endDate) {
-    final allPayments = paymentDB.getAll();
+  Future<List<Payment>> getBetweenDates(
+    int startDate,
+    int endDate,
+    Transaction txn,
+  ) {
+    final allPayments = paymentDB.getAll(txn);
     final filtered = allPayments.then(
       (payments) => payments
           .where(
@@ -55,8 +59,8 @@ class PaymentDAO extends BaseDAO<Payment> {
     return filtered;
   }
 
-  Future<double> calculatePaid(String userUnified) {
-    final userPayments = getByUser(userUnified);
+  Future<double> calculatePaid(String userUnified, Transaction txn) {
+    final userPayments = getByUser(userUnified, txn);
     final totalPaid = userPayments.then(
       (payments) => payments.fold(0.0, (sum, payment) => sum + payment.amount),
     );
@@ -64,8 +68,8 @@ class PaymentDAO extends BaseDAO<Payment> {
   }
 
   @override
-  Future<List<Payment>> getNotScheduled({Transaction? txn}) {
-    final allFatoras = paymentDB.getAll();
+  Future<List<Payment>> getNotScheduled(Transaction txn) {
+    final allFatoras = paymentDB.getAll(txn);
     final filteres = allFatoras.then(
       (fatoras) => fatoras
           .where((fatora) => fatora.status == Status.notScheduled)

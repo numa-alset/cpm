@@ -6,13 +6,13 @@ import 'database_helper.dart';
 class PaymentDB {
   final db = DatabaseHelper.instance;
 
-  Future<int> insert(Payment payment, {Transaction? txn}) async {
-    final database = txn ?? await db.database;
+  Future<int> insert(Payment payment, Transaction txn) async {
+    final database = txn;
     return database.insert("payments", payment.toMap());
   }
 
-  Future<List<Payment>> getAll({Transaction? txn}) async {
-    final database = txn ?? await db.database;
+  Future<List<Payment>> getAll(Transaction txn) async {
+    final database = txn;
 
     final result = await database.query(
       "payments",
@@ -23,8 +23,8 @@ class PaymentDB {
     return result.map((e) => Payment.fromMap(e)).toList();
   }
 
-  Future<int> update(Payment payment, Transaction? txn) async {
-    final database = txn ?? await db.database;
+  Future<int> update(Payment payment, Transaction txn) async {
+    final database = txn;
 
     return database.update(
       "payments",
@@ -34,19 +34,22 @@ class PaymentDB {
     );
   }
 
-  Future<int> delete(String unified, Transaction? txn) async {
-    final database = txn ?? await db.database;
+  Future<int> delete(String unified, Transaction txn) async {
+    final database = txn;
 
     return database.update(
       "payments",
-      {"deletedAt": DateTime.now().millisecondsSinceEpoch, "updatedAt": DateTime.now().millisecondsSinceEpoch},
+      {
+        "deletedAt": DateTime.now().millisecondsSinceEpoch,
+        "updatedAt": DateTime.now().millisecondsSinceEpoch,
+      },
       where: "unified=?",
       whereArgs: [unified],
     );
   }
 
-  Future<Payment?> get(String unified) async {
-    final database = await db.database;
+  Future<Payment?> get(String unified, Transaction txn) async {
+    final database = txn;
 
     final result = await database.query(
       "payments",
@@ -59,8 +62,8 @@ class PaymentDB {
     return Payment.fromMap(result.first);
   }
 
-  Future<List<Payment>> getUnsynced({Transaction? txn}) async {
-    final database = txn ?? await db.database;
+  Future<List<Payment>> getUnsynced(Transaction txn) async {
+    final database = txn;
 
     final result = await database.query(
       "payments",

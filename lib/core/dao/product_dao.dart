@@ -9,32 +9,32 @@ class ProductDAO extends BaseDAO<Product> {
   final ProductDB productDB = ProductDB();
 
   @override
-  Future<int> insert(Product item, {Transaction? txn}) {
-    return productDB.insert(item, txn: txn);
+  Future<int> insert(Product item, Transaction txn) {
+    return productDB.insert(item, txn);
   }
 
   @override
-  Future<int> update(Product item, {Transaction? txn}) {
+  Future<int> update(Product item, Transaction txn) {
     return productDB.update(item, txn);
   }
 
   @override
-  Future<int> softDelete(String unified, {Transaction? txn}) {
+  Future<int> softDelete(String unified, Transaction txn) {
     return productDB.delete(unified, txn);
   }
 
   @override
-  Future<Product?> getByUnified(String unified, {Transaction? txn}) {
-    return productDB.get(unified);
+  Future<Product?> getByUnified(String unified, Transaction txn) {
+    return productDB.get(unified, txn);
   }
 
   @override
-  Future<List<Product>> getAll({Transaction? txn}) {
-    return productDB.getAll(txn: txn);
+  Future<List<Product>> getAll(Transaction txn) {
+    return productDB.getAll(txn);
   }
 
-  Future<List<Product>> search(String keyword) {
-    final allProducts = productDB.getAll();
+  Future<List<Product>> search(String keyword, Transaction txn) {
+    final allProducts = productDB.getAll(txn);
     final filtered = allProducts.then(
       (products) => products
           .where(
@@ -46,17 +46,17 @@ class ProductDAO extends BaseDAO<Product> {
     return filtered;
   }
 
-  Future<bool> exists(String unified) {
-    return productDB.get(unified).then((product) => product != null);
+  Future<bool> exists(String unified, Transaction txn) {
+    return productDB.get(unified, txn).then((product) => product != null);
   }
 
-  Future<int> count() {
-    return productDB.getAll().then((products) => products.length);
+  Future<int> count(Transaction txn) {
+    return productDB.getAll(txn).then((products) => products.length);
   }
 
   @override
-  Future<List<Product>> getNotScheduled({Transaction? txn}) {
-    final allFatoras = productDB.getAll();
+  Future<List<Product>> getNotScheduled(Transaction txn) {
+    final allFatoras = productDB.getAll(txn);
     final filteres = allFatoras.then(
       (fatoras) => fatoras
           .where((fatora) => fatora.status == Status.notScheduled)
