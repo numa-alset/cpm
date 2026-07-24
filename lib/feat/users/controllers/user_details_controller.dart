@@ -68,4 +68,25 @@ class UserDetailsController extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<bool> deletePayment(String unified) async {
+    try {
+      // 1. Delete from database (this will also update the user's balance in the DB)
+      await _paymentService.deletePayment(unified);
+
+      // 2. Remove from the local list
+      payments.removeWhere((p) => p.unified == unified);
+
+      // 3. Re-fetch the user data so the new balance reflects at the top of the screen
+      // Call whatever method you use to load the user, e.g.:
+      // await loadUserData();
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      error = "فشل في حذف الدفعة: $e";
+      notifyListeners();
+      return false;
+    }
+  }
 }

@@ -37,6 +37,30 @@ class _UserDetailsView extends StatelessWidget {
     return "${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}";
   }
 
+  Future<bool> _confirmDelete(BuildContext context) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text("حذف الدفعة"),
+            content: const Text(
+              "هل أنت متأكد أنك تريد حذف هذه الدفعة؟ سيتم استرجاع المبلغ لرصيد العميل.",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text("إلغاء"),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text("حذف"),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<UserDetailsController>();
@@ -259,8 +283,7 @@ class _UserDetailsView extends StatelessWidget {
                               );
                             },
                           ),
-
-                    // --- Payments Tab ---
+                    // Payments Tab
                     controller.payments.isEmpty
                         ? _buildEmptyState("لا توجد دفعات")
                         : ListView.separated(
@@ -285,14 +308,55 @@ class _UserDetailsView extends StatelessWidget {
                                     ),
                                   ),
                                   title: const Text("دفعة نقدية"),
-                                  subtitle: Text(_formatDate(payment.date)),
-                                  trailing: Text(
-                                    payment.amount.toStringAsFixed(2),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: Colors.green,
-                                    ),
+                                  subtitle: Text(
+                                    _formatDate(payment.date),
+                                  ), // Assumes you have _formatDate
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        payment.amount.toStringAsFixed(2),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: Colors.green,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.delete_outline,
+                                          color: Colors.red,
+                                        ),
+                                        onPressed: () async {
+                                          final confirm = await _confirmDelete(
+                                            context,
+                                          );
+                                          if (confirm && context.mounted) {
+                                            // NOTE: Adjust 'UserDetailsController' to your actual controller name
+                                            final success = await context
+                                                .read<UserDetailsController>()
+                                                .deletePayment(payment.unified);
+
+                                            if (success && context.mounted) {
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    "تم حذف الدفعة بنجاح",
+                                                  ),
+                                                  backgroundColor: Colors.green,
+                                                ),
+                                              );
+                                              context
+                                                  .read<UserDetailsController>()
+                                                  .load();
+                                            }
+                                          }
+                                        },
+                                      ),
+                                    ],
                                   ),
                                   onTap: () {
                                     // TODO: Edit/View Payment Details

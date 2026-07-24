@@ -41,11 +41,11 @@ class _ShellNavigationState extends State<ShellNavigation> {
       case 0:
         return 'الجدولة';
       case 1:
-        return 'المدفوعات';
+        return 'سجل المدفوعات';
       case 2:
         return 'المستخدمين';
       case 3:
-        return 'المنتجات';
+        return 'إدارة المنتجات';
       default:
         return 'الجدولة';
     }
