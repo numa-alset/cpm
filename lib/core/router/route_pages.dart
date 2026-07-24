@@ -8,6 +8,9 @@ class AppRouter {
   static const String settingPath = '/setting';
   static const String paymentPath = '/payment';
   static const String testPath = '/test';
+  static const String userDetailsPath = '/user_details';
+  static const String addPaymentPath = '/add_payment';
+  static const String addInvoicePath = '/add_invoice';
 }
 
 class AppRouterName {
@@ -20,4 +23,7 @@ class AppRouterName {
   static const String setting = 'setting';
   static const String payment = 'payment';
   static const String test = 'test';
+  static const String userDetails = 'user_details';
+  static const String addPayment = 'add_payment';
+  static const String addInvoice = 'add_invoice';
 }

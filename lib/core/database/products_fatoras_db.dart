@@ -71,7 +71,7 @@ class FatoraProductsDB {
     final result = await database.query(
       "fatora_products",
       where: "deletedAt IS NULL",
-      orderBy: "date DESC",
+      orderBy: "updatedAt DESC",
     );
 
     return result.map((e) => FatoraProduct.fromMap(e)).toList();

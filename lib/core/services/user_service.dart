@@ -23,7 +23,6 @@ class UserService {
       }
 
       // Generate UUID, timestamps, and add to sync queue
-      print("Creating user: ${user.name}");
       user = user.copyWith(
         unified: generateUUID(),
         deviceId: DeviceService.deviceIdKey,

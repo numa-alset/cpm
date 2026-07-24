@@ -18,7 +18,6 @@ class UsersController extends ChangeNotifier {
 
   /// Main method to fetch users respecting both active filters and search query
   Future<void> load() async {
-    print("in load");
     loading = true;
     error = null;
     notifyListeners();
@@ -77,7 +76,6 @@ class UsersController extends ChangeNotifier {
   Future<bool> addUser(User user) async {
     error = null;
     try {
-      print(user);
       await _userService.createUser(user);
       await load();
       return true;

@@ -33,6 +33,7 @@ class InvoiceService {
       for (var item in items) {
         item = item.copyWith(
           unified: generateUUID(),
+          fatoraUnified: fatora.unified, // ensure the relation is set
           status: Status.notScheduled,
           createdAt: DateTime.now().millisecondsSinceEpoch,
           updatedAt: DateTime.now().millisecondsSinceEpoch,
@@ -40,7 +41,11 @@ class InvoiceService {
         await _fatoraProductRepository.create(item, txn);
       }
       double total = items.fold(0, (sum, item) => sum + item.total);
-      await _userRepository.changeBalance(fatora.userUnified, total, txn);
+      if (fatora.type == InvoiceType.purchase) {
+        await _userRepository.changeBalance(fatora.userUnified, total, txn);
+      } else {
+        await _userRepository.changeBalance(fatora.userUnified, -total, txn);
+      }
     });
   }
 
@@ -75,6 +80,7 @@ class InvoiceService {
       for (var item in items) {
         item = item.copyWith(
           unified: generateUUID(),
+          fatoraUnified: fatora.unified, // ensure relation is set
           status: Status.notScheduled,
           createdAt: DateTime.now().millisecondsSinceEpoch,
           updatedAt: DateTime.now().millisecondsSinceEpoch,
@@ -114,6 +120,29 @@ class InvoiceService {
   Future<Fatora?> getInvoice(String unified) async {
     return await _transactionService.runTransaction((txn) async {
       return await _fatoraRepository.get(unified, txn);
+    });
+  }
+
+  // NEW: Fetch only the products for a specific invoice
+  Future<List<FatoraProduct>> getInvoiceProducts(String invoiceUnified) async {
+    return await _transactionService.runTransaction((txn) async {
+      return await _fatoraProductRepository.getByInvoice(invoiceUnified, txn);
+    });
+  }
+
+  // NEW: Fetch the invoice AND its products together
+  Future<(Fatora, List<FatoraProduct>)?> getInvoiceWithProducts(
+    String unified,
+  ) async {
+    return await _transactionService.runTransaction((txn) async {
+      final fatora = await _fatoraRepository.get(unified, txn);
+      if (fatora == null) return null;
+
+      final products = await _fatoraProductRepository.getByInvoice(
+        unified,
+        txn,
+      );
+      return (fatora, products);
     });
   }
 

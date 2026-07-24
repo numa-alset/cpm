@@ -17,7 +17,7 @@ class PaymentDB {
     final result = await database.query(
       "payments",
       where: "deletedAt IS NULL",
-      orderBy: "date DESC",
+      orderBy: "updatedAt DESC",
     );
 
     return result.map((e) => Payment.fromMap(e)).toList();

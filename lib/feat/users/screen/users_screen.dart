@@ -1,5 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
+import 'package:naji/core/router/route_pages.dart';
 import 'package:naji/feat/users/widget/delete_user_dialog.dart';
 import 'package:naji/feat/users/widget/user_card.dart';
 import 'package:naji/feat/users/widget/user_form_bottom_sheet.dart';
@@ -195,8 +197,10 @@ class _UsersView extends StatelessWidget {
                         user: user,
 
                         onTap: () {
-                          /// TODO
-                          /// Navigator.push(...)
+                          context.push(
+                            AppRouter.userDetailsPath,
+                            extra: user.unified,
+                          );
                         },
 
                         onEdit: () async {

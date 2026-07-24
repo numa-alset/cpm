@@ -1,4 +1,6 @@
 ﻿import "package:flutter/material.dart";
+import 'package:go_router/go_router.dart';
+import 'package:naji/core/router/route_pages.dart';
 import 'package:naji/core/services/device_service.dart';
 import 'package:naji/locator/locator.dart';
 
@@ -43,6 +45,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Device ID saved successfully")),
         );
+        context.go(AppRouter.homePath);
       }
     } catch (e) {
       if (mounted) {

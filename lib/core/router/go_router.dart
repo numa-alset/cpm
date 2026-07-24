@@ -7,6 +7,9 @@ import 'package:naji/feat/payment_screen.dart';
 import 'package:naji/feat/products_screen.dart';
 import 'package:naji/feat/register_screen.dart';
 import 'package:naji/feat/splash_screen.dart';
+import 'package:naji/feat/users/screen/add_invoice_screen.dart';
+import 'package:naji/feat/users/screen/add_payment_screen.dart';
+import 'package:naji/feat/users/screen/user_details_screen.dart';
 import 'package:naji/feat/users/screen/users_screen.dart';
 import 'package:naji/widgets/shell_navigation.dart';
 
@@ -35,6 +38,27 @@ final router = GoRouter(
     GoRoute(
       path: AppRouter.registerPath,
       builder: (context, state) => RegisterScreen(),
+    ),
+    GoRoute(
+      path: AppRouter.userDetailsPath,
+      builder: (context, state) {
+        final userUuid = state.extra as String;
+        return UserDetailsScreen(userUuid: userUuid);
+      },
+    ),
+    GoRoute(
+      path: AppRouter.addPaymentPath,
+      builder: (context, state) {
+        final userUuid = state.extra as String;
+        return AddPaymentScreen(userUnified: userUuid);
+      },
+    ),
+    GoRoute(
+      path: AppRouter.addInvoicePath,
+      builder: (context, state) {
+        final userUuid = state.extra as String;
+        return AddInvoiceScreen(userUnified: userUuid);
+      },
     ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
