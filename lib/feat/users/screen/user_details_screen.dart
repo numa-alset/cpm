@@ -242,6 +242,41 @@ class _UserDetailsView extends StatelessWidget {
                                   ),
                                   children: [
                                     const Divider(height: 1),
+
+                                    // --- NOTE SECTION (Shows only if note exists) ---
+                                    if (fatora.note != null &&
+                                        fatora.note!.trim().isNotEmpty) ...[
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 12,
+                                        ),
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            const Icon(
+                                              Icons.note_outlined,
+                                              size: 18,
+                                              color: Colors.grey,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                fatora.note!,
+                                                style: const TextStyle(
+                                                  color: Colors.black87,
+                                                  fontSize: 13,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const Divider(height: 1),
+                                    ],
+
+                                    // ----------------------------------------------
                                     if (products.isEmpty)
                                       const Padding(
                                         padding: EdgeInsets.all(16),
