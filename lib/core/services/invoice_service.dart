@@ -170,6 +170,12 @@ class InvoiceService {
     });
   }
 
+  Future<List<FatoraProduct>> getNotScheduledInvoicesProducts() async {
+    return await _transactionService.runTransaction((txn) async {
+      return await _fatoraProductRepository.getNotScheduled(txn);
+    });
+  }
+
   String generateUUID() {
     return IdService.generate();
   }
