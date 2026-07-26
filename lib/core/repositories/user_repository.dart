@@ -23,10 +23,10 @@ class UserRepository extends BaseRepository<User> {
   Future<User?> get(String unified, Transaction txn) =>
       _userDAO.getByUnified(unified, txn);
   Future<List<User>> getAll(Transaction txn) => _userDAO.getAll(txn);
-
-  Future<List<User>> getBuyers(Transaction txn) => _userDAO.getBuyers(txn);
-
-  Future<List<User>> getSellers(Transaction txn) => _userDAO.getSellers(txn);
+  //
+  // Future<List<User>> getBuyers(Transaction txn) => _userDAO.getBuyers(txn);
+  //
+  // Future<List<User>> getSellers(Transaction txn) => _userDAO.getSellers(txn);
 
   Future<List<User>> search(String keyword, Transaction txn) =>
       _userDAO.search(keyword, txn);

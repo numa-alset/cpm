@@ -2,25 +2,11 @@ import 'package:naji/core/models/enum_status.dart';
 
 import 'base_model.dart';
 
-enum UserType {
-  buyer,
-  seller;
-
-  String get value => name;
-
-  static UserType fromString(String value) {
-    return UserType.values.firstWhere(
-      (e) => e.name == value,
-      orElse: () => UserType.buyer,
-    );
-  }
-}
-
 class User extends BaseModel {
   final String name;
   final String location;
   final double total;
-  final UserType type;
+  // final UserType type;
 
   const User({
     super.id,
@@ -28,7 +14,7 @@ class User extends BaseModel {
     required this.name,
     required this.location,
     required this.total,
-    required this.type,
+    // required this.type,
     required super.createdAt,
     required super.updatedAt,
     super.deletedAt,
@@ -42,7 +28,7 @@ class User extends BaseModel {
     String? name,
     String? location,
     double? total,
-    UserType? type,
+    // UserType? type,
     int? createdAt,
     int? updatedAt,
     int? deletedAt,
@@ -56,7 +42,7 @@ class User extends BaseModel {
       name: name ?? this.name,
       location: location ?? this.location,
       total: total ?? this.total,
-      type: type ?? this.type,
+      // type: type ?? this.type,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
@@ -71,7 +57,7 @@ class User extends BaseModel {
       "name": name,
       "location": location,
       "total": total,
-      "type": type.value,
+      // "type": type.value,
     };
   }
 
@@ -82,7 +68,7 @@ class User extends BaseModel {
       name: map["name"] as String,
       location: map["location"] as String,
       total: (map["total"] as num).toDouble(),
-      type: UserType.fromString(map["type"] as String),
+      // type: UserType.fromString(map["type"] as String),
       createdAt: map["createdAt"] as int,
       updatedAt: map["updatedAt"] as int,
       deletedAt: map["deletedAt"] as int?,

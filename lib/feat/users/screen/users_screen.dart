@@ -81,45 +81,44 @@ class _UsersView extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ChoiceChip(
-                      label: const Text("الكل"),
-                      selected: controller.filter == UsersFilter.all,
-                      onSelected: (_) => controller.setFilter(UsersFilter.all),
-                    ),
-                  ),
+            // Padding(
+            //   padding: const EdgeInsets.symmetric(horizontal: 16),
+            //   child: Row(
+            //     children: [
+            //       Expanded(
+            //         child: ChoiceChip(
+            //           label: const Text("الكل"),
+            //           selected: controller.filter == UsersFilter.all,
+            //           onSelected: (_) => controller.setFilter(UsersFilter.all),
+            //         ),
+            //       ),
+            //
+            //       const SizedBox(width: 8),
+            //
+            //       Expanded(
+            //         child: ChoiceChip(
+            //           label: const Text("المشترون"),
+            //           selected: controller.filter == UsersFilter.buyers,
+            //           onSelected: (_) =>
+            //               controller.setFilter(UsersFilter.buyers),
+            //         ),
+            //       ),
+            //
+            //       const SizedBox(width: 8),
+            //
+            //       Expanded(
+            //         child: ChoiceChip(
+            //           label: const Text("البائعون"),
+            //           selected: controller.filter == UsersFilter.sellers,
+            //           onSelected: (_) =>
+            //               controller.setFilter(UsersFilter.sellers),
+            //         ),
+            //       ),
+            //     ],
+            //   ),
+            // ),
 
-                  const SizedBox(width: 8),
-
-                  Expanded(
-                    child: ChoiceChip(
-                      label: const Text("المشترون"),
-                      selected: controller.filter == UsersFilter.buyers,
-                      onSelected: (_) =>
-                          controller.setFilter(UsersFilter.buyers),
-                    ),
-                  ),
-
-                  const SizedBox(width: 8),
-
-                  Expanded(
-                    child: ChoiceChip(
-                      label: const Text("البائعون"),
-                      selected: controller.filter == UsersFilter.sellers,
-                      onSelected: (_) =>
-                          controller.setFilter(UsersFilter.sellers),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
+            // const SizedBox(height: 12),
             Expanded(
               child: Builder(
                 builder: (_) {

@@ -21,7 +21,7 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
   late final TextEditingController _totalController;
 
   bool _saving = false;
-  late UserType _type;
+  // late UserType _type;
 
   bool get isEdit => widget.user != null;
 
@@ -37,7 +37,7 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
       text: user != null ? user.total.toStringAsFixed(2) : '0',
     );
 
-    _type = user?.type ?? UserType.buyer;
+    // _type = user?.type ?? UserType.buyer;
   }
 
   @override
@@ -68,7 +68,7 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
           name: _nameController.text.trim(),
           location: _locationController.text.trim(),
           total: total,
-          type: _type,
+          // type: _type,
           updatedAt: DateTime.now().millisecondsSinceEpoch,
           status: Status.notScheduled,
         );
@@ -82,7 +82,7 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
           name: _nameController.text.trim(),
           location: _locationController.text.trim(),
           total: total,
-          type: _type,
+          // type: _type,
           createdAt: now,
           updatedAt: now,
           deviceId: '',
@@ -210,40 +210,40 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
               const SizedBox(height: 24),
               Text("نوع المستخدم", style: theme.textTheme.titleMedium),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: RadioListTile<UserType>(
-                      value: UserType.buyer,
-                      groupValue: _type,
-                      title: const Text("مشتري"),
-                      contentPadding: EdgeInsets.zero,
-                      dense: true,
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setState(() {
-                          _type = value;
-                        });
-                      },
-                    ),
-                  ),
-                  Expanded(
-                    child: RadioListTile<UserType>(
-                      value: UserType.seller,
-                      groupValue: _type,
-                      title: const Text("بائع"),
-                      contentPadding: EdgeInsets.zero,
-                      dense: true,
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setState(() {
-                          _type = value;
-                        });
-                      },
-                    ),
-                  ),
-                ],
-              ),
+              // Row(
+              //   children: [
+              //     Expanded(
+              //       child: RadioListTile<UserType>(
+              //         value: UserType.buyer,
+              //         groupValue: _type,
+              //         title: const Text("مشتري"),
+              //         contentPadding: EdgeInsets.zero,
+              //         dense: true,
+              //         onChanged: (value) {
+              //           if (value == null) return;
+              //           setState(() {
+              //             _type = value;
+              //           });
+              //         },
+              //       ),
+              //     ),
+              //     Expanded(
+              //       child: RadioListTile<UserType>(
+              //         value: UserType.seller,
+              //         groupValue: _type,
+              //         title: const Text("بائع"),
+              //         contentPadding: EdgeInsets.zero,
+              //         dense: true,
+              //         onChanged: (value) {
+              //           if (value == null) return;
+              //           setState(() {
+              //             _type = value;
+              //           });
+              //         },
+              //       ),
+              //     ),
+              //   ],
+              // ),
               const SizedBox(height: 32),
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),

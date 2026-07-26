@@ -85,17 +85,17 @@ class UserService {
     });
   }
 
-  Future<List<User>> getBuyers() async {
-    return await _transactionService.runTransaction((txn) async {
-      return await _userRepository.getBuyers(txn);
-    });
-  }
-
-  Future<List<User>> getSellers() async {
-    return await _transactionService.runTransaction((txn) async {
-      return await _userRepository.getSellers(txn);
-    });
-  }
+  // Future<List<User>> getBuyers() async {
+  //   return await _transactionService.runTransaction((txn) async {
+  //     return await _userRepository.getBuyers(txn);
+  //   });
+  // }
+  //
+  // Future<List<User>> getSellers() async {
+  //   return await _transactionService.runTransaction((txn) async {
+  //     return await _userRepository.getSellers(txn);
+  //   });
+  // }
 
   Future<List<User>> searchUsers(String keyword) async {
     return await _transactionService.runTransaction((txn) async {

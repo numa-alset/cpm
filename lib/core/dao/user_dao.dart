@@ -33,21 +33,21 @@ class UserDAO extends BaseDAO<User> {
     return userDB.getAll(txn);
   }
 
-  Future<List<User>> getBuyers(Transaction txn) {
-    final allUsers = userDB.getAll(txn);
-    final filtered = allUsers.then(
-      (users) => users.where((user) => user.type == UserType.buyer).toList(),
-    );
-    return filtered;
-  }
-
-  Future<List<User>> getSellers(Transaction txn) {
-    final allUsers = userDB.getAll(txn);
-    final filtered = allUsers.then(
-      (users) => users.where((user) => user.type == UserType.seller).toList(),
-    );
-    return filtered;
-  }
+  // Future<List<User>> getBuyers(Transaction txn) {
+  //   final allUsers = userDB.getAll(txn);
+  //   final filtered = allUsers.then(
+  //     (users) => users.where((user) => user.type == UserType.buyer).toList(),
+  //   );
+  //   return filtered;
+  // }
+  //
+  // Future<List<User>> getSellers(Transaction txn) {
+  //   final allUsers = userDB.getAll(txn);
+  //   final filtered = allUsers.then(
+  //     (users) => users.where((user) => user.type == UserType.seller).toList(),
+  //   );
+  //   return filtered;
+  // }
 
   Future<List<User>> search(String keyword, Transaction txn) {
     final allUsers = userDB.getAll(txn);

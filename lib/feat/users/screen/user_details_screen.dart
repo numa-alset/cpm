@@ -95,7 +95,6 @@ class _UserDetailsView extends StatelessWidget {
     }
 
     final user = controller.user!;
-    final isBuyer = user.type == UserType.buyer;
 
     return DefaultTabController(
       length: 2,
@@ -117,14 +116,8 @@ class _UserDetailsView extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 30,
-                      backgroundColor: isBuyer
-                          ? Colors.blue.shade100
-                          : Colors.orange.shade100,
-                      child: Icon(
-                        isBuyer ? Icons.shopping_cart : Icons.store,
-                        color: isBuyer ? Colors.blue : Colors.orange,
-                        size: 30,
-                      ),
+                      backgroundColor: Colors.blue.shade100,
+                      child: Icon(Icons.store, color: Colors.blue, size: 30),
                     ),
                     const SizedBox(width: 16),
                     Expanded(

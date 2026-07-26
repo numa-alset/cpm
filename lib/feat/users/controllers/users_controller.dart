@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:naji/core/models/user.dart';
 import 'package:naji/core/services/user_service.dart';
 
-enum UsersFilter { all, buyers, sellers }
+enum UsersFilter { all }
 
 class UsersController extends ChangeNotifier {
   final UserService _userService;
@@ -33,12 +33,6 @@ class UsersController extends ChangeNotifier {
           case UsersFilter.all:
             users = await _userService.getAllUsers();
             break;
-          case UsersFilter.buyers:
-            users = await _userService.getBuyers();
-            break;
-          case UsersFilter.sellers:
-            users = await _userService.getSellers();
-            break;
         }
       }
     } catch (e) {
@@ -53,12 +47,6 @@ class UsersController extends ChangeNotifier {
     switch (filter) {
       case UsersFilter.all:
         users = result;
-        break;
-      case UsersFilter.buyers:
-        users = result.where((e) => e.type == UserType.buyer).toList();
-        break;
-      case UsersFilter.sellers:
-        users = result.where((e) => e.type == UserType.seller).toList();
         break;
     }
   }
