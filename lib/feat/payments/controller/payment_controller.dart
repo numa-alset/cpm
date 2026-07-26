@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:naji/core/models/enum_status.dart';
 import 'package:naji/core/models/payment.dart';
 import 'package:naji/core/models/user.dart';
-import 'package:naji/core/services/device_service.dart';
+import 'package:naji/core/services/id_service.dart';
 import 'package:naji/core/services/payment_service.dart';
 import 'package:naji/core/services/user_service.dart';
 
@@ -68,7 +68,7 @@ class PaymentsController extends ChangeNotifier {
       final now = DateTime.now().millisecondsSinceEpoch;
 
       final payment = Payment(
-        unified: DeviceService.deviceIdKey, // Make sure IdService is imported
+        unified: IdService.generate(), // Make sure IdService is imported
         userUnified: userUnified,
         amount: amount,
         date: now, // Defaults to now, but you could add a date picker if needed

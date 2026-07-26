@@ -148,6 +148,14 @@ class AppDrawer extends StatelessWidget {
               context.push(AppRouter.statisticsPath);
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.import_export),
+            title: const Text('استيراد البيانات'),
+            onTap: () {
+              Navigator.pop(context);
+              context.push(AppRouter.dataManagementPath);
+            },
+          ),
         ],
       ),
     );

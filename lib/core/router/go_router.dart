@@ -1,7 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naji/core/router/route_pages.dart';
 import 'package:naji/core/services/device_service.dart';
 import 'package:naji/feat/fatora_screen.dart';
+import 'package:naji/feat/home/screen/data_management_screen.dart';
 import 'package:naji/feat/home/screen/home_screen.dart';
 import 'package:naji/feat/payments/screen/payments_screen.dart';
 import 'package:naji/feat/products/screen/products_screen.dart';
@@ -14,7 +16,9 @@ import 'package:naji/feat/users/screen/user_details_screen.dart';
 import 'package:naji/feat/users/screen/users_screen.dart';
 import 'package:naji/widgets/shell_navigation.dart';
 
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 final router = GoRouter(
+  navigatorKey: rootNavigatorKey,
   initialLocation: AppRouter.splashPath,
   routes: [
     GoRoute(
@@ -43,6 +47,10 @@ final router = GoRouter(
     GoRoute(
       path: AppRouter.statisticsPath,
       builder: (context, state) => StatisticsScreen(),
+    ),
+    GoRoute(
+      path: AppRouter.dataManagementPath,
+      builder: (context, state) => DataManagementScreen(),
     ),
     GoRoute(
       path: AppRouter.userDetailsPath,

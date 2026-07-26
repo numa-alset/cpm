@@ -11,6 +11,7 @@ class AppRouter {
   static const String addPaymentPath = '/add_payment';
   static const String addInvoicePath = '/add_invoice';
   static const String statisticsPath = '/statistics';
+  static const String dataManagementPath = '/data_management';
 }
 
 class AppRouterName {
@@ -26,4 +27,5 @@ class AppRouterName {
   static const String addPayment = 'add_payment';
   static const String addInvoice = 'add_invoice';
   static const String statistics = 'statistics';
+  static const String dataManagement = 'data_management';
 }

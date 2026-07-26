@@ -27,8 +27,7 @@ class ImportService {
   final FatoraProductsDB _fatoraProductsDB = FatoraProductsDB();
   final TransactionService _transactionService = TransactionService();
 
-  /// Import a JSON backup file and upsert records.
-  /// Returns a map with counts of processed records.
+  /// Import a JSON backup file and SMART merge records.
   Future<Map<String, int>> importJson(File file) async {
     final content = await file.readAsString();
     final Map<String, dynamic> data =
@@ -41,100 +40,95 @@ class ImportService {
       var paymentsCount = 0;
       var fatoraProductsCount = 0;
 
-      // USERS
+      // 1. USERS
       final users = (data['users'] ?? []) as List<dynamic>;
-
       for (final u in users) {
         try {
           final user = User.fromJson(Map<String, dynamic>.from(u as Map));
-
           final existing = await _userDB.get(user.unified, txn);
 
           if (existing == null) {
             await _userDB.insert(user, txn);
-          } else {
+            usersCount++;
+          } else if (user.updatedAt > existing.updatedAt) {
+            // <-- SMART CHECK
             await _userDB.update(user, txn);
+            usersCount++;
           }
-
-          usersCount++;
         } catch (_) {}
       }
 
-      // PRODUCTS
+      // 2. PRODUCTS
       final products = (data['products'] ?? []) as List<dynamic>;
-
       for (final p in products) {
         try {
           final product = Product.fromJson(Map<String, dynamic>.from(p as Map));
-
           final existing = await _productDB.get(product.unified, txn);
 
           if (existing == null) {
             await _productDB.insert(product, txn);
-          } else {
+            productsCount++;
+          } else if (product.updatedAt > existing.updatedAt) {
+            // <-- SMART CHECK
             await _productDB.update(product, txn);
+            productsCount++;
           }
-
-          productsCount++;
         } catch (_) {}
       }
 
-      // FATORAS
+      // 3. FATORAS
       final fatoras = (data['fatoras'] ?? []) as List<dynamic>;
-
       for (final f in fatoras) {
         try {
           final item = Fatora.fromJson(Map<String, dynamic>.from(f as Map));
-
           final existing = await _fatoraDB.get(item.unified, txn);
 
           if (existing == null) {
             await _fatoraDB.insert(item, txn);
-          } else {
+            fatorasCount++;
+          } else if (item.updatedAt > existing.updatedAt) {
+            // <-- SMART CHECK
             await _fatoraDB.update(item, txn);
+            fatorasCount++;
           }
-
-          fatorasCount++;
         } catch (_) {}
       }
 
-      // PAYMENTS
+      // 4. PAYMENTS
       final payments = (data['payments'] ?? []) as List<dynamic>;
-
       for (final p in payments) {
         try {
           final item = Payment.fromJson(Map<String, dynamic>.from(p as Map));
-
           final existing = await _paymentDB.get(item.unified, txn);
 
           if (existing == null) {
             await _paymentDB.insert(item, txn);
-          } else {
+            paymentsCount++;
+          } else if (item.updatedAt > existing.updatedAt) {
+            // <-- SMART CHECK
             await _paymentDB.update(item, txn);
+            paymentsCount++;
           }
-
-          paymentsCount++;
         } catch (_) {}
       }
 
-      // FATORA PRODUCTS
+      // 5. FATORA PRODUCTS
       final fp = (data['fatoraProducts'] ?? []) as List<dynamic>;
-
       for (final p in fp) {
         try {
           final item = FatoraProduct.fromJson(
             Map<String, dynamic>.from(p as Map),
           );
-
           final existing = await _fatoraProductsDB.get(item.unified, txn);
 
           if (existing == null) {
             await _fatoraProductsDB.insert(item, txn);
-          } else {
+            fatoraProductsCount++;
+          } else if (item.updatedAt > existing.updatedAt) {
+            // <-- SMART CHECK
             await _fatoraProductsDB.update(item, txn);
+            fatoraProductsCount++;
           }
-
-          fatoraProductsCount++;
         } catch (_) {}
       }
 
@@ -160,7 +154,9 @@ class ImportService {
         final outFile = File(outPath);
         await outFile.create(recursive: true);
         await outFile.writeAsBytes(file.content as List<int>);
+
         final result = await importJson(outFile);
+
         await outFile.delete().catchError((_) {});
         return result;
       }
@@ -176,18 +172,14 @@ class ImportService {
   }
 
   /// Replace the app database file with the provided sqlite file.
-  /// Closes the current database and copies the given file into place.
   Future<void> importDatabase(File sourceDbFile) async {
     await DatabaseHelper.instance.close();
-
     final dbPath = await getDatabasesPath();
-
     final destination = File(join(dbPath, DatabaseHelper.databaseName));
 
     if (await destination.exists()) {
       await destination.delete();
     }
-
     await sourceDbFile.copy(destination.path);
   }
 }

@@ -195,7 +195,11 @@ class HomeController extends ChangeNotifier {
     try {
       final file = await _backupService.exportUnsynced();
       await SharePlus.instance.share(
-        ShareParams(files: [XFile(file.path)], subject: 'بيانات الجدولة'),
+        ShareParams(
+          files: [XFile(file.path)],
+          subject:
+              '${DateTime.now().year}/${DateTime.now().month.toString().padLeft(2, '0')}/${DateTime.now().day.toString().padLeft(2, '0')}_بيانات الجدولة_${unscheduledItems.length} عناصر',
+        ),
       );
 
       await _transactionService.runTransaction((txn) async {

@@ -45,8 +45,6 @@ CREATE TABLE users(
     location TEXT NOT NULL,
     total REAL NOT NULL DEFAULT 0,
 
-    type TEXT NOT NULL,
-
     createdAt INTEGER NOT NULL,
     updatedAt INTEGER NOT NULL,
     deletedAt INTEGER,

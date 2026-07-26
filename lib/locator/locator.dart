@@ -42,6 +42,7 @@ Future<void> setupLocator() async {
 
   // Register GoRouter
   getIt.registerSingleton<GoRouter>(app_router.router);
+  // GetIt.I.registerSingleton<ShareHandlerService>(ShareHandlerService());
 
   // Database helpers
   getIt.registerLazySingleton(() => UserDB());

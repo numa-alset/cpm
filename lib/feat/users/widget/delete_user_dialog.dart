@@ -12,12 +12,7 @@ Future<bool?> showDeleteUserDialog(BuildContext context, User user) {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircleAvatar(
-            radius: 28,
-            child: Icon(
-              user.type == UserType.buyer ? Icons.shopping_cart : Icons.store,
-            ),
-          ),
+          CircleAvatar(radius: 28, child: Icon(Icons.store)),
           const SizedBox(height: 16),
           Text(
             user.name,
