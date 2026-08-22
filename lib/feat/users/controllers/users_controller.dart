@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/models/user.dart';
 import 'package:naji/core/services/user_service.dart';
 
@@ -104,13 +105,17 @@ class UsersController extends ChangeNotifier {
     }
   }
 
-  Future<bool> changeBalance(String unified, double newBalance) async {
+  Future<bool> changeBalance(
+    String unified,
+    double newBalance,
+    Currency currency,
+  ) async {
     error = null;
     try {
       loading = true;
       notifyListeners();
 
-      await _userService.changeBalance(unified, newBalance);
+      await _userService.changeBalance(unified, newBalance, currency);
       await load();
       return true;
     } catch (e) {

@@ -21,8 +21,6 @@ class _HomeView extends StatelessWidget {
     switch (type) {
       case SyncItemType.user:
         return Icons.person;
-      case SyncItemType.product:
-        return Icons.inventory_2;
       case SyncItemType.invoice:
         return Icons.receipt;
       case SyncItemType.payment:
@@ -36,8 +34,6 @@ class _HomeView extends StatelessWidget {
     switch (type) {
       case SyncItemType.user:
         return Colors.blue;
-      case SyncItemType.product:
-        return Colors.orange;
       case SyncItemType.invoice:
         return Colors.green;
       case SyncItemType.payment:
@@ -56,7 +52,6 @@ class _HomeView extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Header Section
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -92,7 +87,6 @@ class _HomeView extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-
                   FilledButton.icon(
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -130,10 +124,7 @@ class _HomeView extends StatelessWidget {
                 ],
               ),
             ),
-
             const Divider(height: 1),
-
-            // List Section
             Expanded(
               child: RefreshIndicator(
                 onRefresh: controller.loadData,
@@ -207,7 +198,7 @@ class _HomeView extends StatelessWidget {
                           final item = controller.unscheduledItems[index];
                           final iconColor = _getColorForType(item.type);
 
-                          // --- Grouped Display (Fatora with Products) ---
+                          // إذا كان العنصر يحتوي على عناصر فرعية (مثل فاتورة بداخلها منتجات)
                           if (item.children.isNotEmpty) {
                             return Card(
                               elevation: 0,
@@ -309,7 +300,7 @@ class _HomeView extends StatelessWidget {
                             );
                           }
 
-                          // --- Single Standalone Item Display ---
+                          // العناصر الفردية (مستخدم، منتج، دفعة)
                           return Card(
                             elevation: 0,
                             shape: RoundedRectangleBorder(
@@ -334,22 +325,20 @@ class _HomeView extends StatelessWidget {
                                 item.subtitle,
                                 style: TextStyle(color: Colors.grey.shade600),
                               ),
+                              // إكمال الكود الناقص هنا
                               trailing: IconButton(
-                                icon: const Icon(
+                                icon: Icon(
                                   Icons.cloud_upload_outlined,
-                                  color: Colors.blue,
+                                  color: theme.colorScheme.primary,
                                 ),
-                                tooltip: "جدولة هذا العنصر",
                                 onPressed: () async {
                                   final success = await context
                                       .read<HomeController>()
                                       .scheduleSingle(item);
                                   if (success && context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          "تمت جدولة '${item.title}' بنجاح",
-                                        ),
+                                      const SnackBar(
+                                        content: Text("تمت الجدولة بنجاح"),
                                         backgroundColor: Colors.green,
                                       ),
                                     );

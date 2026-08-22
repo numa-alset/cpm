@@ -20,8 +20,6 @@ class UserCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // final isBuyer = user.type == UserType.buyer;
-
     return Card(
       elevation: 0,
       clipBehavior: Clip.antiAlias,
@@ -36,7 +34,7 @@ class UserCard extends StatelessWidget {
               CircleAvatar(
                 radius: 28,
                 backgroundColor: Colors.blue.shade100,
-                child: Icon(Icons.store, color: Colors.blue),
+                child: const Icon(Icons.store, color: Colors.blue),
               ),
 
               const SizedBox(width: 16),
@@ -77,21 +75,27 @@ class UserCard extends StatelessWidget {
 
                     const SizedBox(height: 10),
 
+                    // Chips لعرض الأرصدة الثنائية والنوع
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        Chip(
+                        const Chip(
                           avatar: Icon(Icons.store, size: 18),
                           label: Text("متجر"),
                         ),
-
                         Chip(
                           avatar: const Icon(
                             Icons.account_balance_wallet_outlined,
                             size: 18,
                           ),
-                          label: Text(user.total.toStringAsFixed(2)),
+                          label: Text("${user.totalSy.toStringAsFixed(2)} ل.س"),
+                        ),
+                        Chip(
+                          avatar: const Icon(Icons.attach_money, size: 18),
+                          label: Text(
+                            "${user.totalDollar.toStringAsFixed(2)} \$",
+                          ),
                         ),
                       ],
                     ),

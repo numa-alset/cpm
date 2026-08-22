@@ -59,60 +59,40 @@ class _StatisticsView extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.all(16.0),
                 children: [
-                  // --- Financial Summary Cards ---
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _StatCard(
-                          title: "المبيعات اليومية",
-                          value: controller.dailySales,
-                          icon: Icons.today,
-                          color: Colors.blue,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _StatCard(
-                          title: "مبيعات الشهر",
-                          value: controller.monthlySales,
-                          icon: Icons.calendar_month,
-                          color: Colors.green,
-                        ),
-                      ),
-                    ],
+                  // --- Financial Summary Cards with Dual Currency Support ---
+                  _DualStatCard(
+                    title: "المبيعات اليومية",
+                    values: controller.dailySales,
+                    icon: Icons.today,
+                    color: Colors.blue,
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _StatCard(
-                          title: "مشتريات الشهر",
-                          value: controller.monthlyPurchases,
-                          icon: Icons.shopping_bag,
-                          color: Colors.orange,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _StatCard(
-                          title: "التدفق النقدي",
-                          value: controller.cashFlow,
-                          icon: Icons.account_balance_wallet,
-                          // Red if negative cash flow, Teal if positive
-                          color: controller.cashFlow < 0
-                              ? Colors.red
-                              : Colors.teal,
-                        ),
-                      ),
-                    ],
+                  _DualStatCard(
+                    title: "مبيعات الشهر",
+                    values: controller.monthlySales,
+                    icon: Icons.calendar_month,
+                    color: Colors.green,
                   ),
                   const SizedBox(height: 12),
-                  _StatCard(
+                  _DualStatCard(
+                    title: "مشتريات الشهر",
+                    values: controller.monthlyPurchases,
+                    icon: Icons.shopping_bag,
+                    color: Colors.orange,
+                  ),
+                  const SizedBox(height: 12),
+                  _DualStatCard(
+                    title: "التدفق النقدي",
+                    values: controller.cashFlow,
+                    icon: Icons.account_balance_wallet,
+                    color: Colors.teal,
+                  ),
+                  const SizedBox(height: 12),
+                  _DualStatCard(
                     title: "إجمالي الديون المستحقة",
-                    value: controller.outstandingDebt,
+                    values: controller.outstandingDebt,
                     icon: Icons.money_off,
                     color: Colors.red.shade700,
-                    isFullWidth: true,
                   ),
 
                   const SizedBox(height: 32),
@@ -184,7 +164,6 @@ class _StatisticsView extends StatelessWidget {
     );
   }
 
-  // Helper method to build the top 5 lists cleanly
   Widget _buildTopList(List<String> items, String emptyMessage) {
     if (items.isEmpty) {
       return Container(
@@ -249,28 +228,25 @@ class _StatisticsView extends StatelessWidget {
   }
 }
 
-// Reusable card widget for the dashboard metrics
-class _StatCard extends StatelessWidget {
+// Reusable card widget for dual currency metric display
+class _DualStatCard extends StatelessWidget {
   final String title;
-  final double value;
+  final Map<String, double> values;
   final IconData icon;
   final Color color;
-  final bool isFullWidth;
 
-  const _StatCard({
+  const _DualStatCard({
     required this.title,
-    required this.value,
+    required this.values,
     required this.icon,
     required this.color,
-    this.isFullWidth = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Formatting the number. Using .abs() to format negative cash flows correctly.
-    final formattedValue = value.abs().toStringAsFixed(2);
-    final sign = value < 0 ? "-" : "";
+    final syVal = values['sy'] ?? 0.0;
+    final dollarVal = values['dollar'] ?? 0.0;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -299,39 +275,76 @@ class _StatCard extends StatelessWidget {
                 ),
                 child: Icon(icon, color: color, size: 20),
               ),
-              if (isFullWidth) ...[
-                const SizedBox(width: 12),
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: Colors.grey.shade700,
-                    fontWeight: FontWeight.w600,
-                  ),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w600,
                 ),
-              ],
+              ),
             ],
           ),
           const SizedBox(height: 12),
-          if (!isFullWidth)
-            Text(
-              title,
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Syrian Pounds Value
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "الليرة السورية",
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        "${syVal < 0 ? '-' : ''}${syVal.abs().toStringAsFixed(2)} ل.س",
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: syVal < 0 ? Colors.red : Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          const SizedBox(height: 4),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerRight,
-            child: Text(
-              "$sign$formattedValue د.ع",
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+              const VerticalDivider(width: 20),
+              // Dollar Value
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "الدولار الأمريكي",
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        "${dollarVal < 0 ? '-' : ''}${dollarVal.abs().toStringAsFixed(2)} \$",
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: dollarVal < 0 ? Colors.red : Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),

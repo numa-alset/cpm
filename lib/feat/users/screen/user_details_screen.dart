@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/router/route_pages.dart';
 import 'package:naji/core/services/invoice_service.dart';
 import 'package:naji/core/services/payment_service.dart';
@@ -108,7 +109,7 @@ class _UserDetailsView extends StatelessWidget {
           onRefresh: controller.load,
           child: Column(
             children: [
-              // User Info Header
+              // User Info Header with Dual Currency Balances
               Container(
                 padding: const EdgeInsets.all(16),
                 color: theme.colorScheme.surface,
@@ -117,7 +118,11 @@ class _UserDetailsView extends StatelessWidget {
                     CircleAvatar(
                       radius: 30,
                       backgroundColor: Colors.blue.shade100,
-                      child: Icon(Icons.store, color: Colors.blue, size: 30),
+                      child: const Icon(
+                        Icons.store,
+                        color: Colors.blue,
+                        size: 30,
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -148,20 +153,34 @@ class _UserDetailsView extends StatelessWidget {
                         ],
                       ),
                     ),
+                    // Balances Section (SYP & USD)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          "الرصيد",
+                          "الأرصدة",
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: Colors.grey,
                           ),
                         ),
+                        const SizedBox(height: 2),
+                        // Syrian Pounds Balance
                         Text(
-                          user.total.toStringAsFixed(2),
-                          style: theme.textTheme.titleLarge?.copyWith(
+                          "${user.totalSy.toStringAsFixed(2)} ل.س",
+                          style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: user.total < 0 ? Colors.red : Colors.green,
+                            color: user.totalSy < 0 ? Colors.red : Colors.green,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        // Dollar Balance
+                        Text(
+                          "${user.totalDollar.toStringAsFixed(2)} \$",
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: user.totalDollar < 0
+                                ? Colors.red
+                                : Colors.green,
                           ),
                         ),
                       ],
@@ -197,7 +216,17 @@ class _UserDetailsView extends StatelessWidget {
                               final fatora = invoiceRecord.$1; // The Invoice
                               final products = invoiceRecord.$2; // The Products
 
-                              final isSale = fatora.type.value == "sale";
+                              final invoiceTotals = <String>[];
+                              if (fatora.totalSy > 0) {
+                                invoiceTotals.add(
+                                  '${fatora.totalSy.toStringAsFixed(2)} ${Currency.sy.symbol}',
+                                );
+                              }
+                              if (fatora.totalDollar > 0) {
+                                invoiceTotals.add(
+                                  '${fatora.totalDollar.toStringAsFixed(2)} ${Currency.dollar.symbol}',
+                                );
+                              }
 
                               return Card(
                                 elevation: 0,
@@ -210,33 +239,27 @@ class _UserDetailsView extends StatelessWidget {
                                   shape: const Border(),
                                   collapsedShape: const Border(),
                                   leading: CircleAvatar(
-                                    backgroundColor: isSale
-                                        ? Colors.blue.shade50
-                                        : Colors.purple.shade50,
-                                    child: Icon(
+                                    backgroundColor: Colors.blue.shade50,
+                                    child: const Icon(
                                       Icons.receipt,
-                                      color: isSale
-                                          ? Colors.blue
-                                          : Colors.purple,
+                                      color: Colors.blue,
                                     ),
                                   ),
-                                  title: Text(
-                                    "فاتورة ${isSale ? 'مبيعات' : 'مشتريات'}",
-                                  ),
+                                  title: const Text("فاتورة"),
                                   subtitle: Text(
                                     "${_formatDate(fatora.date)}  •  ${products.length} منتجات",
                                   ),
                                   trailing: Text(
-                                    fatora.total.toStringAsFixed(2),
+                                    invoiceTotals.join('  •  '),
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 16,
+                                      fontSize: 14,
                                     ),
                                   ),
                                   children: [
                                     const Divider(height: 1),
 
-                                    // --- NOTE SECTION (Shows only if note exists) ---
+                                    // --- NOTE SECTION ---
                                     if (fatora.note != null &&
                                         fatora.note!.trim().isNotEmpty) ...[
                                       Padding(
@@ -269,7 +292,7 @@ class _UserDetailsView extends StatelessWidget {
                                       const Divider(height: 1),
                                     ],
 
-                                    // ----------------------------------------------
+                                    // --- PRODUCTS LIST ---
                                     if (products.isEmpty)
                                       const Padding(
                                         padding: EdgeInsets.all(16),
@@ -285,6 +308,10 @@ class _UserDetailsView extends StatelessWidget {
                                             const Divider(height: 1),
                                         itemBuilder: (context, prodIndex) {
                                           final product = products[prodIndex];
+                                          final productTotal =
+                                              product.price * product.quantity;
+                                          final productCurrency = product.currency;
+
                                           return ListTile(
                                             dense: true,
                                             title: Text(
@@ -294,10 +321,10 @@ class _UserDetailsView extends StatelessWidget {
                                               ),
                                             ),
                                             subtitle: Text(
-                                              "الكمية: ${product.quantity} × ${product.price}",
+                                              "الكمية: ${product.quantity} × ${product.price} ${productCurrency.symbol}",
                                             ),
                                             trailing: Text(
-                                              product.total.toStringAsFixed(2),
+                                              "${productTotal.toStringAsFixed(2)} ${productCurrency.symbol}",
                                               style: const TextStyle(
                                                 fontSize: 14,
                                               ),
@@ -311,7 +338,8 @@ class _UserDetailsView extends StatelessWidget {
                               );
                             },
                           ),
-                    // Payments Tab
+
+                    // --- Payments Tab ---
                     controller.payments.isEmpty
                         ? _buildEmptyState("لا توجد دفعات")
                         : ListView.separated(
@@ -321,6 +349,9 @@ class _UserDetailsView extends StatelessWidget {
                                 const SizedBox(height: 8),
                             itemBuilder: (context, index) {
                               final payment = controller.payments[index];
+                              final currencySymbol =
+                                  payment.currency?.symbol ?? '';
+
                               return Card(
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
@@ -336,14 +367,12 @@ class _UserDetailsView extends StatelessWidget {
                                     ),
                                   ),
                                   title: const Text("دفعة نقدية"),
-                                  subtitle: Text(
-                                    _formatDate(payment.date),
-                                  ), // Assumes you have _formatDate
+                                  subtitle: Text(_formatDate(payment.date)),
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
-                                        payment.amount.toStringAsFixed(2),
+                                        "${payment.amount.toStringAsFixed(2)} $currencySymbol",
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16,
@@ -361,7 +390,6 @@ class _UserDetailsView extends StatelessWidget {
                                             context,
                                           );
                                           if (confirm && context.mounted) {
-                                            // NOTE: Adjust 'UserDetailsController' to your actual controller name
                                             final success = await context
                                                 .read<UserDetailsController>()
                                                 .deletePayment(payment.unified);
@@ -386,9 +414,6 @@ class _UserDetailsView extends StatelessWidget {
                                       ),
                                     ],
                                   ),
-                                  onTap: () {
-                                    // TODO: Edit/View Payment Details
-                                  },
                                 ),
                               );
                             },

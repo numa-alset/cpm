@@ -40,14 +40,14 @@ class FatoraRepository extends BaseRepository<Fatora> {
     Transaction txn,
   ) => _invoiceDAO.getBetweenDates(startDate, endDate, txn);
 
-  Future<List<Fatora>> getSellInvoices(Transaction txn) =>
-      _invoiceDAO.getSellInvoices(txn);
-
-  Future<List<Fatora>> getBuyInvoices(Transaction txn) =>
-      _invoiceDAO.getBuyInvoices(txn);
-
-  Future<double> calculateTotal(Transaction txn) =>
-      _invoiceDAO.calculateTotalSell(txn);
+  // Future<List<Fatora>> getSellInvoices(Transaction txn) =>
+  //     _invoiceDAO.getSellInvoices(txn);
+  //
+  // Future<List<Fatora>> getBuyInvoices(Transaction txn) =>
+  //     _invoiceDAO.getBuyInvoices(txn);
+  //
+  // Future<double> calculateTotal(Transaction txn) =>
+  //     _invoiceDAO.calculateTotalSell(txn);
 
   Future<Map<Fatora, List<FatoraProduct>>> getCompleteInvoice(
     String unified,

@@ -113,7 +113,7 @@ final router = GoRouter(
             GoRoute(
               path: AppRouter.productsPath,
               builder: (context, state) {
-                return ProductsScreen();
+                return StatisticsScreen();
               },
             ),
           ],

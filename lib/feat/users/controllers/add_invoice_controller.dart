@@ -1,80 +1,81 @@
 import 'package:flutter/material.dart';
+import 'package:naji/core/models/currency.dart';
+import 'package:naji/core/models/enum_status.dart';
 import 'package:naji/core/models/fatora.dart';
 import 'package:naji/core/models/fatora_product.dart';
-import 'package:naji/core/models/product.dart';
-import 'package:naji/core/services/device_service.dart';
+import 'package:naji/core/services/id_service.dart';
 import 'package:naji/core/services/invoice_service.dart';
 import 'package:naji/core/services/product_service.dart';
 
-import '../../../../core/models/enum_status.dart';
-import '../../../../core/services/id_service.dart';
-
 class DraftInvoiceItem {
-  String? productUnified;
   String name;
-  double price;
+  double priceSy;
+  double priceDollar;
   double quantity;
+  Currency currency;
 
   DraftInvoiceItem({
-    this.productUnified,
     this.name = '',
-    this.price = 0.0,
+    this.priceSy = 0.0,
+    this.priceDollar = 0.0,
     this.quantity = 1.0,
+    this.currency = Currency.sy,
   });
 
-  double get total => price * quantity;
+  double getPrice(Currency currency) =>
+      currency == Currency.sy ? priceSy : priceDollar;
+
+  double get currentPrice => getPrice(currency);
+
+  void setPrice(Currency currency, double val) {
+    if (currency == Currency.sy) {
+      priceSy = val;
+    } else {
+      priceDollar = val;
+    }
+  }
+
+  double getTotal(Currency currency) => getPrice(currency) * quantity;
+
+  // الإجماليات لكلتا العملتين
+  double get totalSy => priceSy * quantity;
+  double get totalDollar => priceDollar * quantity;
 }
 
 class AddInvoiceController extends ChangeNotifier {
   final String userUnified;
   final InvoiceService _invoiceService;
-  final ProductService _productService;
 
   AddInvoiceController({
     required this.userUnified,
     required InvoiceService invoiceService,
-    required ProductService productService,
-  }) : _invoiceService = invoiceService,
-       _productService = productService {
+  }) : _invoiceService = invoiceService
+     {
     _init();
   }
 
   DateTime selectedDate = DateTime.now();
-  InvoiceType selectedType = InvoiceType.sale;
   bool isLoading = false;
   bool isProductsLoading = false;
   String? error;
 
-  List<Product> availableProducts = [];
   List<DraftInvoiceItem> items = [];
 
-  double get grandTotal => items.fold(0, (sum, item) => sum + item.total);
+  // إجمالي الليرة السورية لكل الفاتورة
+  double get grandTotalSy => items.fold(0, (sum, item) => sum + item.totalSy);
+
+  // إجمالي الدولار لكل الفاتورة
+  double get grandTotalDollar =>
+      items.fold(0, (sum, item) => sum + item.totalDollar);
 
   Future<void> _init() async {
     addItem();
-    await loadProducts();
   }
 
-  Future<void> loadProducts() async {
-    isProductsLoading = true;
-    notifyListeners();
-    try {
-      availableProducts = await _productService.getAllProducts();
-    } catch (e) {
-      error = "فشل في تحميل قائمة المنتجات: $e";
-    } finally {
-      isProductsLoading = false;
-      notifyListeners();
-    }
-  }
+
 
   void setDate(DateTime date) {
     selectedDate = date;
-    notifyListeners();
-  }
-
-  void setType(InvoiceType type) {
-    selectedType = type;
     notifyListeners();
   }
 
@@ -89,59 +90,70 @@ class AddInvoiceController extends ChangeNotifier {
       notifyListeners();
     }
   }
+  //
+  // void selectProduct(int index) {
+  //   if (index >= 0 && index < items.length) {
+  //     items[index].name = product.name;
+  //     items[index].priceSy = product.priceSy;
+  //     items[index].priceDollar = product.priceDollar;
+  //     items[index].currency = product.priceSy > 0 && product.priceDollar <= 0
+  //         ? Currency.sy
+  //         : product.priceDollar > 0 && product.priceSy <= 0
+  //         ? Currency.dollar
+  //         : Currency.sy;
+  //     notifyListeners();
+  //   }
+  // }
 
-  void selectProduct(int index, Product product) {
-    if (index >= 0 && index < items.length) {
-      items[index].productUnified = product.unified;
-      items[index].name = product.name;
-      items[index].price = product.price;
-      notifyListeners();
-    }
-  }
-
-  void updateItem(int index, {String? name, double? price, double? quantity}) {
+  void updateItem(
+    int index, {
+    String? name,
+    double? priceSy,
+    double? priceDollar,
+    double? quantity,
+    Currency? currency,
+  }) {
     if (index >= 0 && index < items.length) {
       if (name != null) items[index].name = name;
-      if (price != null) items[index].price = price;
+      if (priceSy != null) items[index].priceSy = priceSy;
+      if (priceDollar != null) items[index].priceDollar = priceDollar;
       if (quantity != null) items[index].quantity = quantity;
+      if (currency != null) items[index].currency = currency;
       notifyListeners();
     }
   }
 
-  /// Creates a new product directly in DB, reloads product list, and selects it for item[index]
-  Future<bool> createAndSelectProduct({
-    required int index,
-    required String name,
-    required double price,
-  }) async {
-    try {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      final newProduct = Product(
-        unified: IdService.generate(),
-        name: name.trim(),
-        price: price,
-        createdAt: now,
-        updatedAt: now,
-        deviceId: DeviceService.deviceIdKey,
-        status: Status.notScheduled,
-      );
-
-      await _productService.createProduct(newProduct);
-
-      // Reload products list
-      availableProducts = await _productService.getAllProducts();
-
-      // Auto-select this newly created product for the specific row
-      selectProduct(index, newProduct);
-
-      notifyListeners();
-      return true;
-    } catch (e) {
-      error = "فشل في إضافة المنتج الجديد: $e";
-      notifyListeners();
-      return false;
-    }
-  }
+  // Future<bool> createAndSelectProduct({
+  //   required int index,
+  //   required String name,
+  //   required double priceSy,
+  //   required double priceDollar,
+  // }) async {
+  //   try {
+  //     final now = DateTime.now().millisecondsSinceEpoch;
+  //     final newProduct = Product(
+  //       unified: IdService.generate(),
+  //       name: name.trim(),
+  //       priceSy: priceSy,
+  //       priceDollar: priceDollar,
+  //       createdAt: now,
+  //       updatedAt: now,
+  //       deviceId: "default_device",
+  //       status: Status.notScheduled,
+  //     );
+  //
+  //     await _productService.createProduct(newProduct);
+  //     availableProducts = await _productService.getAllProducts();
+  //     selectProduct(index, newProduct);
+  //
+  //     notifyListeners();
+  //     return true;
+  //   } catch (e) {
+  //     error = "فشل في إضافة المنتج الجديد: $e";
+  //     notifyListeners();
+  //     return false;
+  //   }
+  // }
 
   Future<bool> saveInvoice({required String writer, String? note}) async {
     if (items.isEmpty) {
@@ -156,7 +168,7 @@ class AddInvoiceController extends ChangeNotifier {
         notifyListeners();
         return false;
       }
-      if (item.price <= 0 || item.quantity <= 0) {
+      if (item.priceSy < 0 || item.priceDollar < 0 || item.quantity <= 0) {
         error = "الرجاء التأكد من إدخال سعر وكمية صحيحة لجميع المنتجات";
         notifyListeners();
         return false;
@@ -169,72 +181,73 @@ class AddInvoiceController extends ChangeNotifier {
 
     try {
       final now = DateTime.now().millisecondsSinceEpoch;
-
-      // 1. Consolidate duplicate products to prevent database unique constraint conflicts
       final Map<String, DraftInvoiceItem> consolidatedMap = {};
 
       for (var item in items) {
-        // Group by productUnified if present; fallback to trimmed product name
-        final String key =
-            (item.productUnified != null && item.productUnified!.isNotEmpty)
-            ? item.productUnified!
-            : item.name.trim().toLowerCase();
+        final String key = item.name.trim().toLowerCase();
 
         if (consolidatedMap.containsKey(key)) {
           final existing = consolidatedMap[key]!;
           final double totalQuantity = existing.quantity + item.quantity;
-          final double totalAmount = existing.total + item.total;
 
-          // Compute weighted average unit price in case prices differ
-          final double weightedPrice = totalQuantity > 0
-              ? (totalAmount / totalQuantity)
-              : existing.price;
+          final double totalSyAmount = existing.totalSy + item.totalSy;
+          final double totalDollarAmount =
+              existing.totalDollar + item.totalDollar;
+
+          final double weightedPriceSy = totalQuantity > 0
+              ? (totalSyAmount / totalQuantity)
+              : existing.priceSy;
+          final double weightedPriceDollar = totalQuantity > 0
+              ? (totalDollarAmount / totalQuantity)
+              : existing.priceDollar;
 
           consolidatedMap[key] = DraftInvoiceItem(
-            productUnified: existing.productUnified ?? item.productUnified,
             name: existing.name.isNotEmpty ? existing.name : item.name.trim(),
-            price: weightedPrice,
+            priceSy: weightedPriceSy,
+            priceDollar: weightedPriceDollar,
             quantity: totalQuantity,
+            currency: existing.currency,
           );
         } else {
           consolidatedMap[key] = DraftInvoiceItem(
-            productUnified: item.productUnified,
             name: item.name.trim(),
-            price: item.price,
+            priceSy: item.priceSy,
+            priceDollar: item.priceDollar,
             quantity: item.quantity,
+            currency: item.currency,
           );
         }
       }
 
       final consolidatedItems = consolidatedMap.values.toList();
 
-      // 2. Create the Fatora header
       final fatora = Fatora(
         unified: IdService.generate(),
         userUnified: userUnified,
         writer: writer.trim(),
         date: selectedDate.millisecondsSinceEpoch,
-        type: selectedType,
-        total: grandTotal,
+        totalSy: grandTotalSy,
+        totalDollar: grandTotalDollar,
         note: note?.trim().isEmpty == true ? null : note?.trim(),
         createdAt: now,
         updatedAt: now,
-        deviceId: DeviceService.deviceIdKey,
+        deviceId: "default_device",
         status: Status.notScheduled,
       );
 
-      // 3. Map consolidated items to FatoraProduct models
       final fatoraProducts = consolidatedItems.map((item) {
+        final itemCurrency = item.currency;
+
         return FatoraProduct(
           unified: IdService.generate(),
           fatoraUnified: fatora.unified,
-          productUnified: item.productUnified ?? IdService.generate(),
           productName: item.name.trim(),
-          price: item.price,
+          price: item.getPrice(itemCurrency),
           quantity: item.quantity,
+          currency: itemCurrency,
           createdAt: now,
           updatedAt: now,
-          deviceId: DeviceService.deviceIdKey,
+          deviceId: "default_device",
           status: Status.notScheduled,
         );
       }).toList();

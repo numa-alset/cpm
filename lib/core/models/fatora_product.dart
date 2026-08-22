@@ -1,23 +1,24 @@
+import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/models/enum_status.dart';
 
 import 'base_model.dart';
 
 class FatoraProduct extends BaseModel {
   final String fatoraUnified;
-  final String productUnified;
   final String productName;
   final double price;
   final double quantity;
+  final Currency currency;
   double get total => quantity * price;
 
   const FatoraProduct({
     super.id,
     required super.unified,
     required this.fatoraUnified,
-    required this.productUnified,
     required this.productName,
     required this.price,
     required this.quantity,
+    required this.currency,
     required super.createdAt,
     required super.updatedAt,
     super.deletedAt,
@@ -29,10 +30,10 @@ class FatoraProduct extends BaseModel {
     int? id,
     String? unified,
     String? fatoraUnified,
-    String? productUnified,
     String? productName,
     double? price,
     double? quantity,
+    Currency? currency,
     double? total,
     int? createdAt,
     int? updatedAt,
@@ -45,10 +46,10 @@ class FatoraProduct extends BaseModel {
       id: id ?? this.id,
       unified: unified ?? this.unified,
       fatoraUnified: fatoraUnified ?? this.fatoraUnified,
-      productUnified: productUnified ?? this.productUnified,
       productName: productName ?? this.productName,
       price: price ?? this.price,
       quantity: quantity ?? this.quantity,
+      currency: currency ?? this.currency,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
@@ -61,10 +62,10 @@ class FatoraProduct extends BaseModel {
     return {
       ...baseMap(),
       "fatoraUnified": fatoraUnified,
-      "productUnified": productUnified,
       "productName": productName,
       "price": price,
       "quantity": quantity,
+      "currency": currency.value,
     };
   }
 
@@ -73,10 +74,12 @@ class FatoraProduct extends BaseModel {
       id: map["id"] as int?,
       unified: map["unified"] as String,
       fatoraUnified: map["fatoraUnified"] as String,
-      productUnified: map["productUnified"] as String,
       productName: map["productName"] as String,
-      price: (map["price"] as num).toDouble(),
-      quantity: (map["quantity"] as num).toDouble(),
+      price: (map["price"] as num?)?.toDouble() ?? 0.0,
+      quantity: (map["quantity"] as num?)?.toDouble() ?? 0.0,
+      currency: Currency.fromString(
+        map["currency"] as String? ?? map["currencyCode"] as String? ?? 'SYP',
+      ),
       createdAt: map["createdAt"] as int,
       updatedAt: map["updatedAt"] as int,
       deletedAt: map["deletedAt"] as int?,

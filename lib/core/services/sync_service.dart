@@ -3,17 +3,15 @@ import 'package:naji/core/services/transaction_service.dart';
 
 import '../database/fatora_db.dart';
 import '../database/payment_db.dart';
-import '../database/product_db.dart';
 import '../database/user_db.dart';
 import '../models/fatora.dart';
 import '../models/fatora_product.dart';
 import '../models/payment.dart';
-import '../models/product.dart';
 import '../models/user.dart';
 
 class SyncService {
   final UserDB userDB = UserDB();
-  final ProductDB productDB = ProductDB();
+  // final ProductDB productDB = ProductDB();
   final FatoraDB fatoraDB = FatoraDB();
   final PaymentDB paymentDB = PaymentDB();
   final FatoraProductsDB fatoraProductsDB = FatoraProductsDB();
@@ -35,23 +33,23 @@ class SyncService {
       }
     });
   }
-
-  Future<void> syncProduct(Product product) async {
-    await _transactionService.runTransaction((txn) async {
-      final old = await productDB.get(product.unified, txn);
-
-      if (old == null) {
-        await productDB.insert(product, txn);
-        return;
-      }
-
-      if (DateTime.parse(
-        product.updatedAt.toString(),
-      ).isAfter(DateTime.parse(old.updatedAt.toString()))) {
-        await productDB.update(product, txn);
-      }
-    });
-  }
+  //
+  // Future<void> syncProduct(Product product) async {
+  //   await _transactionService.runTransaction((txn) async {
+  //     final old = await productDB.get(product.unified, txn);
+  //
+  //     if (old == null) {
+  //       await productDB.insert(product, txn);
+  //       return;
+  //     }
+  //
+  //     if (DateTime.parse(
+  //       product.updatedAt.toString(),
+  //     ).isAfter(DateTime.parse(old.updatedAt.toString()))) {
+  //       await productDB.update(product, txn);
+  //     }
+  //   });
+  // }
 
   Future<void> syncFatora(Fatora fatora) async {
     await _transactionService.runTransaction((txn) async {

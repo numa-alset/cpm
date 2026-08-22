@@ -5,14 +5,13 @@ import '../../../../core/models/user.dart';
 Future<bool?> showDeleteUserDialog(BuildContext context, User user) {
   return showDialog<bool>(
     context: context,
-    // 1. Name the dialog's context "dialogContext" instead of "_"
     builder: (dialogContext) => AlertDialog(
       icon: const Icon(Icons.delete_outline, color: Colors.red, size: 42),
       title: const Text("حذف المستخدم", textAlign: TextAlign.center),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircleAvatar(radius: 28, child: Icon(Icons.store)),
+          const CircleAvatar(radius: 28, child: Icon(Icons.store)),
           const SizedBox(height: 16),
           Text(
             user.name,
@@ -25,9 +24,15 @@ Future<bool?> showDeleteUserDialog(BuildContext context, User user) {
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey.shade600),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
+          // عرض الأرصدة الثنائية (ليرة ودولار)
           Text(
-            "الرصيد: ${user.total.toStringAsFixed(2)}",
+            "رصيد الليرة: ${user.totalSy.toStringAsFixed(2)} ل.س",
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "رصيد الدولار: ${user.totalDollar.toStringAsFixed(2)} \$",
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 20),
@@ -40,7 +45,6 @@ Future<bool?> showDeleteUserDialog(BuildContext context, User user) {
       ),
       actions: [
         TextButton(
-          // 2. Use dialogContext here
           onPressed: () => Navigator.pop(dialogContext, false),
           child: const Text("إلغاء"),
         ),
@@ -51,7 +55,6 @@ Future<bool?> showDeleteUserDialog(BuildContext context, User user) {
           ),
           icon: const Icon(Icons.delete),
           label: const Text("حذف"),
-          // 3. Use dialogContext here
           onPressed: () => Navigator.pop(dialogContext, true),
         ),
       ],

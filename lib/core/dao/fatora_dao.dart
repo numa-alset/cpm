@@ -57,49 +57,49 @@ class FatoraDAO extends BaseDAO<Fatora> {
     return filteres;
   }
 
-  Future<List<Fatora>> getSellInvoices(Transaction txn) {
-    final allFatoras = fatoraDB.getAll(txn);
-    final filteres = allFatoras.then(
-      (fatoras) =>
-          fatoras.where((fatora) => fatora.type == InvoiceType.sale).toList(),
-    );
-    return filteres;
-  }
+  // Future<List<Fatora>> getSellInvoices(Transaction txn) {
+  //   final allFatoras = fatoraDB.getAll(txn);
+  //   final filteres = allFatoras.then(
+  //     (fatoras) =>
+  //         fatoras.where((fatora) => fatora.type == InvoiceType.sale).toList(),
+  //   );
+  //   return filteres;
+  // }
 
-  Future<List<Fatora>> getBuyInvoices(Transaction txn) {
-    final allFatoras = fatoraDB.getAll(txn);
-    final filteres = allFatoras.then(
-      (fatoras) => fatoras
-          .where((fatora) => fatora.type == InvoiceType.purchase)
-          .toList(),
-    );
-    return filteres;
-  }
+  // Future<List<Fatora>> getBuyInvoices(Transaction txn) {
+  //   final allFatoras = fatoraDB.getAll(txn);
+  //   final filteres = allFatoras.then(
+  //     (fatoras) => fatoras
+  //         .where((fatora) => fatora.type == InvoiceType.purchase)
+  //         .toList(),
+  //   );
+  //   return filteres;
+  // }
 
-  Future<double> calculateTotalSell(Transaction txn) {
-    final allFatoras = fatoraDB.getAll(txn);
-    final filteres = allFatoras.then(
-      (fatoras) =>
-          fatoras.where((fatora) => fatora.type == InvoiceType.sale).toList(),
-    );
-    final total = filteres.then(
-      (fatoras) => fatoras.fold(0.0, (sum, fatora) => sum + fatora.total),
-    );
-    return total;
-  }
-
-  Future<double> calculateTotalBuy(Transaction txn) {
-    final allFatoras = fatoraDB.getAll(txn);
-    final filteres = allFatoras.then(
-      (fatoras) => fatoras
-          .where((fatora) => fatora.type == InvoiceType.purchase)
-          .toList(),
-    );
-    final total = filteres.then(
-      (fatoras) => fatoras.fold(0.0, (sum, fatora) => sum + fatora.total),
-    );
-    return total;
-  }
+  // Future<double> calculateTotalSell(Transaction txn) {
+  //   final allFatoras = fatoraDB.getAll(txn);
+  //   final filteres = allFatoras.then(
+  //     (fatoras) =>
+  //         fatoras.where((fatora) => fatora.type == InvoiceType.sale).toList(),
+  //   );
+  //   final total = filteres.then(
+  //     (fatoras) => fatoras.fold(0.0, (sum, fatora) => sum + fatora.total),
+  //   );
+  //   return total;
+  // }
+  //
+  // Future<double> calculateTotalBuy(Transaction txn) {
+  //   final allFatoras = fatoraDB.getAll(txn);
+  //   final filteres = allFatoras.then(
+  //     (fatoras) => fatoras
+  //         .where((fatora) => fatora.type == InvoiceType.purchase)
+  //         .toList(),
+  //   );
+  //   final total = filteres.then(
+  //     (fatoras) => fatoras.fold(0.0, (sum, fatora) => sum + fatora.total),
+  //   );
+  //   return total;
+  // }
 
   @override
   Future<List<Fatora>> getNotScheduled(Transaction txn) {

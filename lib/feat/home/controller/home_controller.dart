@@ -2,24 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:naji/core/database/fatora_db.dart';
 import 'package:naji/core/database/payment_db.dart';
-import 'package:naji/core/database/product_db.dart';
 import 'package:naji/core/database/products_fatoras_db.dart';
 import 'package:naji/core/database/user_db.dart';
 import 'package:naji/core/models/enum_status.dart';
 import 'package:naji/core/models/fatora.dart';
 import 'package:naji/core/models/fatora_product.dart';
 import 'package:naji/core/models/payment.dart';
-import 'package:naji/core/models/product.dart';
 import 'package:naji/core/models/user.dart';
 import 'package:naji/core/services/backup_service.dart';
 import 'package:naji/core/services/invoice_service.dart';
 import 'package:naji/core/services/payment_service.dart';
-import 'package:naji/core/services/product_service.dart';
 import 'package:naji/core/services/transaction_service.dart';
 import 'package:naji/core/services/user_service.dart';
 import 'package:share_plus/share_plus.dart';
 
-enum SyncItemType { user, product, invoice, payment, fatoraProduct }
+enum SyncItemType { user, invoice, payment, fatoraProduct }
 
 class SyncItem {
   final String unified;
@@ -27,7 +24,7 @@ class SyncItem {
   final String subtitle;
   final SyncItemType type;
   final dynamic originalObject;
-  final List<SyncItem> children; // Added to hold FatoraProducts
+  final List<SyncItem> children;
 
   SyncItem({
     required this.unified,
@@ -41,7 +38,6 @@ class SyncItem {
 
 class HomeController extends ChangeNotifier {
   final UserService _userService = GetIt.I<UserService>();
-  final ProductService _productService = GetIt.I<ProductService>();
   final InvoiceService _invoiceService = GetIt.I<InvoiceService>();
   final PaymentService _paymentService = GetIt.I<PaymentService>();
   final BackupService _backupService = GetIt.I<BackupService>();
@@ -57,25 +53,23 @@ class HomeController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // نجلب فقط البيانات غير المجدولة
       final results = await Future.wait([
         _userService.getNotScheduledUsers(),
-        _productService.getNotScheduledProducts(),
         _invoiceService.getNotScheduledInvoices(),
         _paymentService.getNotScheduledPayments(),
         _invoiceService.getNotScheduledInvoicesProducts(),
       ]);
 
-      final users = results[0] as List<User>;
-      final products = results[1] as List<Product>;
-      final invoices = results[2] as List<Fatora>;
-      final payments = results[3] as List<Payment>;
-      final fatoraProducts = results[4] as List<FatoraProduct>;
+      final unscheduledUsers = results[0] as List<User>;
+      final unscheduledInvoices = results[2] as List<Fatora>;
+      final unscheduledPayments = results[3] as List<Payment>;
+      final unscheduledFatoraProducts = results[4] as List<FatoraProduct>;
 
       final List<SyncItem> items = [];
 
-      // 1. Add Users, Products, Payments
       items.addAll(
-        users.map(
+        unscheduledUsers.map(
           (u) => SyncItem(
             unified: u.unified,
             title: u.name,
@@ -87,19 +81,7 @@ class HomeController extends ChangeNotifier {
       );
 
       items.addAll(
-        products.map(
-          (p) => SyncItem(
-            unified: p.unified,
-            title: p.name,
-            subtitle: 'منتج',
-            type: SyncItemType.product,
-            originalObject: p,
-          ),
-        ),
-      );
-
-      items.addAll(
-        payments.map(
+        unscheduledPayments.map(
           (p) => SyncItem(
             unified: p.unified,
             title: 'دفعة نقدية',
@@ -110,14 +92,12 @@ class HomeController extends ChangeNotifier {
         ),
       );
 
-      // 2. Map Products to their Invoices
       final Map<String, List<FatoraProduct>> productsByInvoice = {};
-      for (var fp in fatoraProducts) {
+      for (var fp in unscheduledFatoraProducts) {
         productsByInvoice.putIfAbsent(fp.fatoraUnified, () => []).add(fp);
       }
 
-      // 3. Process Unscheduled Invoices and attach their products
-      for (var i in invoices) {
+      for (var i in unscheduledInvoices) {
         final productsForThisInvoice =
             productsByInvoice.remove(i.unified) ?? [];
 
@@ -136,7 +116,7 @@ class HomeController extends ChangeNotifier {
         items.add(
           SyncItem(
             unified: i.unified,
-            title: 'فاتورة ${i.type.value == "sale" ? "مبيعات" : "مشتريات"}',
+            title: 'فاتورة',
             subtitle: 'المجموع: ${i.total}',
             type: SyncItemType.invoice,
             originalObject: i,
@@ -145,7 +125,6 @@ class HomeController extends ChangeNotifier {
         );
       }
 
-      // 4. Handle orphaned products (Products added to an invoice that was ALREADY scheduled)
       for (var entry in productsByInvoice.entries) {
         final parentInvoice = await _invoiceService.getInvoice(entry.key);
         final children = entry.value
@@ -164,8 +143,7 @@ class HomeController extends ChangeNotifier {
           items.add(
             SyncItem(
               unified: parentInvoice.unified,
-              title:
-                  'تعديلات فاتورة ${parentInvoice.type.value == "sale" ? "مبيعات" : "مشتريات"}',
+              title: 'تعديلات فاتورة',
               subtitle: 'تم إضافة عناصر جديدة',
               type: SyncItemType.invoice,
               originalObject: parentInvoice,
@@ -173,7 +151,6 @@ class HomeController extends ChangeNotifier {
             ),
           );
         } else {
-          // If parent is somehow completely missing, just show items standalone
           items.addAll(children);
         }
       }
@@ -225,7 +202,6 @@ class HomeController extends ChangeNotifier {
     try {
       List<XFile> filesToShare = [];
 
-      // Helper to export and attach a file
       Future<void> exportAndAttach(SyncItem i) async {
         final file = await _backupService.exportSingleRecord(
           type: i.type.name,
@@ -234,18 +210,15 @@ class HomeController extends ChangeNotifier {
         filesToShare.add(XFile(file.path));
       }
 
-      // 1. Export main item and all children
       await exportAndAttach(item);
       for (var child in item.children) {
         await exportAndAttach(child);
       }
 
-      // 2. Share them together in one batch
       await SharePlus.instance.share(
         ShareParams(files: filesToShare, subject: 'تصدير ${item.title}'),
       );
 
-      // 3. Update DB for item and children
       await _transactionService.runTransaction((txn) async {
         await _updateItemStatusInTxn(item, txn);
         for (var child in item.children) {
@@ -272,12 +245,6 @@ class HomeController extends ChangeNotifier {
           status: Status.scheduled,
         );
         await UserDB().update(obj, txn);
-        break;
-      case SyncItemType.product:
-        final obj = (item.originalObject as Product).copyWith(
-          status: Status.scheduled,
-        );
-        await ProductDB().update(obj, txn);
         break;
       case SyncItemType.invoice:
         final obj = (item.originalObject as Fatora).copyWith(

@@ -19,7 +19,6 @@ class StatisticsController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Fetch all statistics in parallel for faster loading
       final results = await Future.wait([
         _statisticsService.dashboardSummary(),
         _statisticsService.topCustomers(limit: 5),
@@ -37,10 +36,15 @@ class StatisticsController extends ChangeNotifier {
     }
   }
 
-  // Helper getters for clean UI access
-  double get dailySales => summary['dailySales'] ?? 0.0;
-  double get monthlySales => summary['monthlySales'] ?? 0.0;
-  double get monthlyPurchases => summary['monthlyPurchases'] ?? 0.0;
-  double get outstandingDebt => summary['outstandingDebt'] ?? 0.0;
-  double get cashFlow => summary['cashFlow'] ?? 0.0;
+  // Getters for Syrian Pounds (SYP)
+  Map<String, double> get dailySales =>
+      summary['dailySales'] ?? {'sy': 0.0, 'dollar': 0.0};
+  Map<String, double> get monthlySales =>
+      summary['monthlySales'] ?? {'sy': 0.0, 'dollar': 0.0};
+  Map<String, double> get monthlyPurchases =>
+      summary['monthlyPurchases'] ?? {'sy': 0.0, 'dollar': 0.0};
+  Map<String, double> get outstandingDebt =>
+      summary['outstandingDebt'] ?? {'sy': 0.0, 'dollar': 0.0};
+  Map<String, double> get cashFlow =>
+      summary['cashFlow'] ?? {'sy': 0.0, 'dollar': 0.0};
 }

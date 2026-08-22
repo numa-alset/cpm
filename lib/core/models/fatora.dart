@@ -1,28 +1,20 @@
+import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/models/enum_status.dart';
 
 import 'base_model.dart';
-
-enum InvoiceType {
-  sale,
-  purchase;
-
-  String get value => name;
-
-  static InvoiceType fromString(String value) {
-    return InvoiceType.values.firstWhere(
-      (e) => e.name == value,
-      orElse: () => InvoiceType.sale,
-    );
-  }
-}
 
 class Fatora extends BaseModel {
   final String userUnified;
   final String writer;
   final int date;
-  final InvoiceType type;
-  final double total;
+  final double totalSy;
+  final double totalDollar;
   final String? note;
+
+  double get total => totalSy + totalDollar;
+  Currency get currency => totalDollar > 0 && totalSy == 0
+      ? Currency.dollar
+      : Currency.sy;
 
   const Fatora({
     super.id,
@@ -30,8 +22,8 @@ class Fatora extends BaseModel {
     required this.userUnified,
     required this.writer,
     required this.date,
-    required this.type,
-    required this.total,
+    this.totalSy = 0,
+    this.totalDollar = 0,
     this.note,
     required super.createdAt,
     required super.updatedAt,
@@ -46,9 +38,10 @@ class Fatora extends BaseModel {
     String? userUnified,
     String? writer,
     int? date,
-    InvoiceType? type,
-    double? total,
+    double? totalSy,
+    double? totalDollar,
     String? note,
+    Currency? currency,
     int? createdAt,
     int? updatedAt,
     int? deletedAt,
@@ -62,8 +55,8 @@ class Fatora extends BaseModel {
       userUnified: userUnified ?? this.userUnified,
       writer: writer ?? this.writer,
       date: date ?? this.date,
-      type: type ?? this.type,
-      total: total ?? this.total,
+      totalSy: totalSy ?? this.totalSy,
+      totalDollar: totalDollar ?? this.totalDollar,
       note: note ?? this.note,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -79,21 +72,34 @@ class Fatora extends BaseModel {
       "userUnified": userUnified,
       "writer": writer,
       "date": date,
-      "type": type.value,
-      "total": total,
+      "totalSy": totalSy,
+      "totalDollar": totalDollar,
       "note": note,
     };
   }
 
   factory Fatora.fromMap(Map<String, dynamic> map) {
+    final legacyTotal = (map["total"] as num?)?.toDouble() ?? 0.0;
+    final legacyCurrency = map["currency"] as String?;
+    final totalSyValue = (map["totalSy"] as num?)?.toDouble() ??
+        (legacyCurrency != null &&
+                Currency.fromString(legacyCurrency) == Currency.sy
+            ? legacyTotal
+            : 0.0);
+    final totalDollarValue = (map["totalDollar"] as num?)?.toDouble() ??
+        (legacyCurrency != null &&
+                Currency.fromString(legacyCurrency) == Currency.dollar
+            ? legacyTotal
+            : 0.0);
+
     return Fatora(
       id: map["id"] as int?,
       unified: map["unified"] as String,
       userUnified: map["userUnified"] as String,
       writer: map["writer"] as String,
       date: map["date"] as int,
-      type: InvoiceType.fromString(map["type"] as String),
-      total: (map["total"] as num).toDouble(),
+      totalSy: totalSyValue,
+      totalDollar: totalDollarValue,
       note: map["note"] as String?,
       createdAt: map["createdAt"] as int,
       updatedAt: map["updatedAt"] as int,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/models/enum_status.dart';
 import 'package:naji/core/models/payment.dart';
 import 'package:naji/core/models/user.dart';
@@ -63,6 +64,7 @@ class PaymentsController extends ChangeNotifier {
   Future<bool> addPayment({
     required String userUnified,
     required double amount,
+    required Currency currency,
   }) async {
     try {
       final now = DateTime.now().millisecondsSinceEpoch;
@@ -75,6 +77,7 @@ class PaymentsController extends ChangeNotifier {
         createdAt: now,
         updatedAt: now,
         status: Status.notScheduled,
+        currency: currency,
         deviceId:
             "default_device", // Replace with DeviceService.deviceIdKey if you use it
       );

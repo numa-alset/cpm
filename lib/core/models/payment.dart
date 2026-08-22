@@ -1,3 +1,4 @@
+import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/models/enum_status.dart';
 
 import 'base_model.dart';
@@ -6,6 +7,7 @@ class Payment extends BaseModel {
   final String userUnified;
   final double amount;
   final int date;
+  final Currency currency;
 
   const Payment({
     super.id,
@@ -13,6 +15,7 @@ class Payment extends BaseModel {
     required this.userUnified,
     required this.amount,
     required this.date,
+    required this.currency,
     required super.createdAt,
     required super.updatedAt,
     super.deletedAt,
@@ -27,6 +30,7 @@ class Payment extends BaseModel {
     double? amount,
     int? date,
     String? note,
+    Currency? currency,
     int? createdAt,
     int? updatedAt,
     int? deletedAt,
@@ -40,6 +44,7 @@ class Payment extends BaseModel {
       userUnified: userUnified ?? this.userUnified,
       amount: amount ?? this.amount,
       date: date ?? this.date,
+      currency: currency ?? this.currency,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
@@ -54,6 +59,7 @@ class Payment extends BaseModel {
       "userUnified": userUnified,
       "amount": amount,
       "date": date,
+      "currency": currency.value,
     };
   }
 
@@ -64,6 +70,7 @@ class Payment extends BaseModel {
       userUnified: map["userUnified"] as String,
       amount: (map["amount"] as num).toDouble(),
       date: map["date"] as int,
+      currency: Currency.fromString(map["currency"] as String? ?? "sy"),
       createdAt: map["createdAt"] as int,
       updatedAt: map["updatedAt"] as int,
       deletedAt: map["deletedAt"] as int?,

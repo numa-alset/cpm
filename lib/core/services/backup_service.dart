@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:archive/archive_io.dart';
 import 'package:naji/core/database/fatora_db.dart';
 import 'package:naji/core/database/payment_db.dart';
-import 'package:naji/core/database/product_db.dart';
 import 'package:naji/core/database/products_fatoras_db.dart';
 import 'package:naji/core/database/user_db.dart';
 import 'package:naji/core/services/transaction_service.dart';
@@ -20,7 +19,6 @@ class BackupService {
   static final String backupFolderName = "naji_backup";
 
   final UserDB _userDB = UserDB();
-  final ProductDB _productDB = ProductDB();
   final FatoraDB _fatoraDB = FatoraDB();
   final PaymentDB _paymentDB = PaymentDB();
   final FatoraProductsDB _fatoraProductsDB = FatoraProductsDB();
@@ -42,10 +40,6 @@ class BackupService {
     final backup = await _transactionService.runTransaction((txn) async {
       final users = (await _userDB.getAll(txn)).map((e) => e.toMap()).toList();
 
-      final products = (await _productDB.getAll(
-        txn,
-      )).map((e) => e.toMap()).toList();
-
       final fatoras = (await _fatoraDB.getAll(
         txn,
       )).map((e) => e.toMap()).toList();
@@ -54,11 +48,10 @@ class BackupService {
         txn,
       )).map((e) => e.toMap()).toList();
 
-      // fatora_products DB helper does not expose a txn-aware getAll, query directly on txn
       final fpResult = await txn.query(
-        'fatora_products',
+        'fatora_items',
         where: 'deletedAt IS NULL',
-        orderBy: 'date DESC',
+        orderBy: 'updatedAt DESC',
       );
 
       final fatoraProducts = fpResult
@@ -70,7 +63,6 @@ class BackupService {
         "version": 1,
 
         "users": users,
-        "products": products,
         "fatoras": fatoras,
         "payments": payments,
         "fatoraProducts": fatoraProducts,
@@ -146,10 +138,6 @@ class BackupService {
         txn,
       )).map((e) => e.toMap()).toList();
 
-      final products = (await _productDB.getUnsynced(
-        txn,
-      )).map((e) => e.toMap()).toList();
-
       final fatoras = (await _fatoraDB.getUnsynced(
         txn,
       )).map((e) => e.toMap()).toList();
@@ -167,7 +155,6 @@ class BackupService {
         "version": 1,
 
         "users": users,
-        "products": products,
         "fatoras": fatoras,
         "payments": payments,
         "fatoraProducts": fatoraProducts,
@@ -201,7 +188,6 @@ class BackupService {
         "createdAt": DateTime.now().toIso8601String(),
         "version": 1,
         "users": <dynamic>[],
-        "products": <dynamic>[],
         "fatoras": <dynamic>[],
         "payments": <dynamic>[],
         "fatoraProducts": <dynamic>[],
@@ -213,14 +199,6 @@ class BackupService {
           final user = await _userDB.get(unified, txn);
           if (user != null) {
             result["users"] = [user.toMap()];
-          }
-          break;
-
-        case 'product':
-        case 'products':
-          final product = await _productDB.get(unified, txn);
-          if (product != null) {
-            result["products"] = [product.toMap()];
           }
           break;
 

@@ -1,3 +1,4 @@
+import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/models/enum_status.dart';
 import 'package:naji/core/services/device_service.dart';
 import 'package:naji/core/services/id_service.dart';
@@ -67,9 +68,13 @@ class UserService {
     });
   }
 
-  Future<void> changeBalance(String unified, double total) async {
+  Future<void> changeBalance(
+    String unified,
+    double total,
+    Currency currency,
+  ) async {
     await _transactionService.runTransaction((txn) async {
-      await _userRepository.changeBalance(unified, total, txn);
+      await _userRepository.changeBalance(unified, total, currency, txn);
     });
   }
 

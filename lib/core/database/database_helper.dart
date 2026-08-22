@@ -21,7 +21,6 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
       onConfigure: _onConfigure,
       onCreate: _onCreate,
     );
@@ -43,7 +42,8 @@ CREATE TABLE users(
 
     name TEXT NOT NULL,
     location TEXT NOT NULL,
-    total REAL NOT NULL DEFAULT 0,
+    totalSy REAL NOT NULL DEFAULT 0,
+    totalDollar REAL NOT NULL DEFAULT 0,
 
     createdAt INTEGER NOT NULL,
     updatedAt INTEGER NOT NULL,
@@ -54,56 +54,33 @@ CREATE TABLE users(
 );
 """);
 
-    //
-    // PRODUCTS
-    //
-    await db.execute("""
-CREATE TABLE products(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-    unified TEXT NOT NULL UNIQUE,
-
-    name TEXT NOT NULL,
-    
-    price REAL NOT NULL DEFAULT 0,
-
-    createdAt INTEGER NOT NULL,
-    updatedAt INTEGER NOT NULL,
-    deletedAt INTEGER,
-
-    deviceId TEXT NOT NULL,
-    status TEXT NOT NULL
-);
-""");
-
-    //
-    // FATORAS (Invoices)
-    //
-    await db.execute("""
+   //
+   // FATORAS (Invoices)
+   //
+   await db.execute("""
 CREATE TABLE fatoras(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-
+ 
     unified TEXT NOT NULL UNIQUE,
-
+ 
     userUnified TEXT NOT NULL,
-
+ 
     writer TEXT NOT NULL,
-
+ 
     date INTEGER NOT NULL,
-
-    total REAL NOT NULL,
-
-    type TEXT NOT NULL,
-
+ 
+    totalSy REAL NOT NULL DEFAULT 0,
+    totalDollar REAL NOT NULL DEFAULT 0,
+  
     note TEXT,
-
+  
     createdAt INTEGER NOT NULL,
     updatedAt INTEGER NOT NULL,
     deletedAt INTEGER,
-
+  
     deviceId TEXT NOT NULL,
     status TEXT NOT NULL,
-
+  
    FOREIGN KEY(userUnified)
 REFERENCES users(unified)
 ON UPDATE CASCADE
@@ -111,42 +88,36 @@ ON DELETE RESTRICT
 );
 """);
 
-    //
-    // FATORA PRODUCTS
-    //
-    await db.execute("""
-CREATE TABLE fatora_products(
+   //
+   // FATORA ITEMS
+   //
+   await db.execute("""
+CREATE TABLE fatora_items(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-
+ 
     unified TEXT NOT NULL UNIQUE,
-
+ 
     fatoraUnified TEXT NOT NULL,
-
-    productUnified TEXT NOT NULL,
-
+ 
     productName TEXT NOT NULL,
-    
+ 
     price REAL NOT NULL,
-
+ 
     quantity REAL NOT NULL,
-
+ 
+    currency TEXT NOT NULL,
+ 
     createdAt INTEGER NOT NULL,
     updatedAt INTEGER NOT NULL,
     deletedAt INTEGER,
-
+ 
     deviceId TEXT NOT NULL,
-
     status TEXT NOT NULL,
-UNIQUE(fatoraUnified, productUnified),
-FOREIGN KEY(fatoraUnified)
-REFERENCES fatoras(unified)
-ON UPDATE CASCADE
-ON DELETE CASCADE,
-
-FOREIGN KEY(productUnified)
-REFERENCES products(unified)
-ON UPDATE CASCADE
-ON DELETE RESTRICT
+ 
+    FOREIGN KEY(fatoraUnified)
+    REFERENCES fatoras(unified)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
 );
 """);
 
@@ -162,6 +133,8 @@ CREATE TABLE payments(
     userUnified TEXT NOT NULL,
 
     amount REAL NOT NULL,
+
+    currency TEXT NOT NULL,
 
     date INTEGER NOT NULL,
     
@@ -187,29 +160,18 @@ ON DELETE RESTRICT
     // USERS
     await db.execute("CREATE INDEX idx_users_unified ON users(unified);");
 
-    await db.execute("CREATE INDEX idx_users_type ON users(type);");
-
-    // PRODUCTS
-    await db.execute("CREATE INDEX idx_products_unified ON products(unified);");
-
     // FATORAS
     await db.execute("CREATE INDEX idx_fatora_unified ON fatoras(unified);");
+    await db.execute("CREATE INDEX idx_fatoras_user ON fatoras(userUnified);");
+    await db.execute("CREATE INDEX idx_fatoras_date ON fatoras(date);");
 
-    await db.execute("CREATE INDEX idx_fatora_user ON fatoras(userUnified);");
-
-    await db.execute("CREATE INDEX idx_fatora_date ON fatoras(date);");
-
-    // FATORA PRODUCTS
+    // FATORA ITEMS
     await db.execute(
-      "CREATE INDEX idx_fp_unified ON fatora_products(unified);",
+      "CREATE INDEX idx_fatora_items_unified ON fatora_items(unified);",
     );
 
     await db.execute(
-      "CREATE INDEX idx_fp_fatora ON fatora_products(fatoraUnified);",
-    );
-
-    await db.execute(
-      "CREATE INDEX idx_fp_product ON fatora_products(productUnified);",
+      "CREATE INDEX idx_fatora_items_fatora ON fatora_items(fatoraUnified);",
     );
 
     // PAYMENTS

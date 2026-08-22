@@ -18,10 +18,10 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
 
   late final TextEditingController _nameController;
   late final TextEditingController _locationController;
-  late final TextEditingController _totalController;
+  late final TextEditingController _totalSyController;
+  late final TextEditingController _totalDollarController;
 
   bool _saving = false;
-  // late UserType _type;
 
   bool get isEdit => widget.user != null;
 
@@ -33,18 +33,20 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
 
     _nameController = TextEditingController(text: user?.name ?? '');
     _locationController = TextEditingController(text: user?.location ?? '');
-    _totalController = TextEditingController(
-      text: user != null ? user.total.toStringAsFixed(2) : '0',
+    _totalSyController = TextEditingController(
+      text: user != null ? user.totalSy.toStringAsFixed(2) : '0',
     );
-
-    // _type = user?.type ?? UserType.buyer;
+    _totalDollarController = TextEditingController(
+      text: user != null ? user.totalDollar.toStringAsFixed(2) : '0',
+    );
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _locationController.dispose();
-    _totalController.dispose();
+    _totalSyController.dispose();
+    _totalDollarController.dispose();
     super.dispose();
   }
 
@@ -57,7 +59,9 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
       _saving = true;
     });
 
-    final total = double.tryParse(_totalController.text.trim()) ?? 0;
+    final totalSy = double.tryParse(_totalSyController.text.trim()) ?? 0;
+    final totalDollar =
+        double.tryParse(_totalDollarController.text.trim()) ?? 0;
     final controller = widget.controller;
 
     try {
@@ -67,8 +71,8 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
         final updatedUser = widget.user!.copyWith(
           name: _nameController.text.trim(),
           location: _locationController.text.trim(),
-          total: total,
-          // type: _type,
+          totalSy: totalSy,
+          totalDollar: totalDollar,
           updatedAt: DateTime.now().millisecondsSinceEpoch,
           status: Status.notScheduled,
         );
@@ -81,8 +85,8 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
           unified: '',
           name: _nameController.text.trim(),
           location: _locationController.text.trim(),
-          total: total,
-          // type: _type,
+          totalSy: totalSy,
+          totalDollar: totalDollar,
           createdAt: now,
           updatedAt: now,
           deviceId: '',
@@ -187,13 +191,14 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
                 },
               ),
               const SizedBox(height: 16),
+              // حقل رصيد الليرة السورية
               TextFormField(
-                controller: _totalController,
+                controller: _totalSyController,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
                 decoration: const InputDecoration(
-                  labelText: "الرصيد",
+                  labelText: "رصيد الليرة السورية",
                   prefixIcon: Icon(Icons.account_balance_wallet),
                 ),
                 validator: (value) {
@@ -207,43 +212,28 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
                   return null;
                 },
               ),
-              const SizedBox(height: 24),
-              Text("نوع المستخدم", style: theme.textTheme.titleMedium),
-              const SizedBox(height: 12),
-              // Row(
-              //   children: [
-              //     Expanded(
-              //       child: RadioListTile<UserType>(
-              //         value: UserType.buyer,
-              //         groupValue: _type,
-              //         title: const Text("مشتري"),
-              //         contentPadding: EdgeInsets.zero,
-              //         dense: true,
-              //         onChanged: (value) {
-              //           if (value == null) return;
-              //           setState(() {
-              //             _type = value;
-              //           });
-              //         },
-              //       ),
-              //     ),
-              //     Expanded(
-              //       child: RadioListTile<UserType>(
-              //         value: UserType.seller,
-              //         groupValue: _type,
-              //         title: const Text("بائع"),
-              //         contentPadding: EdgeInsets.zero,
-              //         dense: true,
-              //         onChanged: (value) {
-              //           if (value == null) return;
-              //           setState(() {
-              //             _type = value;
-              //           });
-              //         },
-              //       ),
-              //     ),
-              //   ],
-              // ),
+              const SizedBox(height: 16),
+              // حقل رصيد الدولار
+              TextFormField(
+                controller: _totalDollarController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: "رصيد الدولار",
+                  prefixIcon: Icon(Icons.attach_money),
+                ),
+                validator: (value) {
+                  final trimmed = value?.trim();
+                  if (trimmed == null || trimmed.isEmpty) {
+                    return "الرصيد مطلوب";
+                  }
+                  if (double.tryParse(trimmed) == null) {
+                    return "قيمة غير صحيحة";
+                  }
+                  return null;
+                },
+              ),
               const SizedBox(height: 32),
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),

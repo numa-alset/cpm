@@ -1,3 +1,4 @@
+import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/models/enum_status.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -33,22 +34,6 @@ class UserDAO extends BaseDAO<User> {
     return userDB.getAll(txn);
   }
 
-  // Future<List<User>> getBuyers(Transaction txn) {
-  //   final allUsers = userDB.getAll(txn);
-  //   final filtered = allUsers.then(
-  //     (users) => users.where((user) => user.type == UserType.buyer).toList(),
-  //   );
-  //   return filtered;
-  // }
-  //
-  // Future<List<User>> getSellers(Transaction txn) {
-  //   final allUsers = userDB.getAll(txn);
-  //   final filtered = allUsers.then(
-  //     (users) => users.where((user) => user.type == UserType.seller).toList(),
-  //   );
-  //   return filtered;
-  // }
-
   Future<List<User>> search(String keyword, Transaction txn) {
     final allUsers = userDB.getAll(txn);
     final filtered = allUsers.then(
@@ -69,10 +54,17 @@ class UserDAO extends BaseDAO<User> {
     return filtered;
   }
 
-  Future<int> updateBalance(String unified, double total, Transaction txn) {
+  Future<int> updateBalance(
+    String unified,
+    double total,
+    Currency currency,
+    Transaction txn,
+  ) {
     return userDB.get(unified, txn).then((user) {
       if (user != null) {
-        final updatedUser = user.copyWith(total: user.total + total);
+        final updatedUser = currency == Currency.sy
+            ? user.copyWith(totalSy: user.totalSy + total)
+            : user.copyWith(totalDollar: user.totalDollar + total);
         return userDB.update(updatedUser, txn);
       }
       return 0;

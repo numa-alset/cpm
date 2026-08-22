@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/models/payment.dart';
 import 'package:naji/core/services/payment_service.dart';
 import 'package:naji/core/services/user_service.dart';
@@ -57,6 +58,7 @@ class _PaymentsView extends StatelessWidget {
     final controller = context.read<PaymentsController>();
 
     String? selectedUserUnified;
+    Currency selectedCurrency = Currency.sy; // القيمة الافتراضية للعملة
     final amountController = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
@@ -91,6 +93,28 @@ class _PaymentsView extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
+              // Dropdown to select Currency
+              DropdownButtonFormField<Currency>(
+                decoration: const InputDecoration(
+                  labelText: "العملة",
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.account_balance_wallet_outlined),
+                ),
+                value: selectedCurrency,
+                items: Currency.values.map((currency) {
+                  return DropdownMenuItem(
+                    value: currency,
+                    child: Text(currency.name),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    selectedCurrency = val;
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+
               // TextField for Amount
               TextFormField(
                 controller: amountController,
@@ -98,7 +122,7 @@ class _PaymentsView extends StatelessWidget {
                   decimal: true,
                 ),
                 decoration: const InputDecoration(
-                  labelText: "المبلغ (د.ع)",
+                  labelText: "المبلغ",
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.attach_money),
                 ),
@@ -120,11 +144,13 @@ class _PaymentsView extends StatelessWidget {
           FilledButton(
             onPressed: () async {
               if (formKey.currentState!.validate()) {
+                // تمرير العملة المختارة مع العملية
                 final success = await context
                     .read<PaymentsController>()
                     .addPayment(
                       userUnified: selectedUserUnified!,
                       amount: double.parse(amountController.text.trim()),
+                      currency: selectedCurrency,
                     );
 
                 if (success && dialogContext.mounted) {
@@ -188,7 +214,7 @@ class _PaymentsView extends StatelessWidget {
             // Main Content wrapped in RefreshIndicator
             Expanded(
               child: RefreshIndicator(
-                onRefresh: controller.loadData, // Triggers on pull-down
+                onRefresh: controller.loadData,
                 child: controller.isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : controller.error != null
@@ -239,7 +265,6 @@ class _PaymentsView extends StatelessWidget {
                         ],
                       )
                     : ListView.builder(
-                        // Ensure list is always scrollable for the RefreshIndicator
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -301,13 +326,17 @@ class _PaymentsView extends StatelessWidget {
                                 ),
                                 leading: CircleAvatar(
                                   backgroundColor: Colors.green.shade50,
-                                  child: const Icon(
-                                    Icons.attach_money,
+                                  child: Icon(
+                                    // تغيير الأيقونة لتلائم نوع العملة
+                                    item.currency == Currency.dollar
+                                        ? Icons.attach_money
+                                        : Icons.money,
                                     color: Colors.green,
                                   ),
                                 ),
                                 title: Text(
-                                  "${item.amount.toStringAsFixed(2)} د.ع",
+                                  // استخدام رمز العملة الديناميكي
+                                  "${item.amount.toStringAsFixed(2)} ${item.currency.symbol}",
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18,

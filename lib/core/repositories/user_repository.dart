@@ -1,3 +1,4 @@
+import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/repositories/base_repository.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -23,18 +24,18 @@ class UserRepository extends BaseRepository<User> {
   Future<User?> get(String unified, Transaction txn) =>
       _userDAO.getByUnified(unified, txn);
   Future<List<User>> getAll(Transaction txn) => _userDAO.getAll(txn);
-  //
-  // Future<List<User>> getBuyers(Transaction txn) => _userDAO.getBuyers(txn);
-  //
-  // Future<List<User>> getSellers(Transaction txn) => _userDAO.getSellers(txn);
 
   Future<List<User>> search(String keyword, Transaction txn) =>
       _userDAO.search(keyword, txn);
   Future<bool> isExist(String keyword, Transaction txn) =>
       _userDAO.isExist(keyword, txn);
 
-  Future<int> changeBalance(String unified, double total, Transaction txn) =>
-      _userDAO.updateBalance(unified, total, txn);
+  Future<int> changeBalance(
+    String unified,
+    double total,
+    Currency currency,
+    Transaction txn,
+  ) => _userDAO.updateBalance(unified, total, currency, txn);
 
   @override
   Future<List<User>> getNotScheduled(Transaction txn) {

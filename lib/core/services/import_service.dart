@@ -10,18 +10,16 @@ import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
 import '../database/fatora_db.dart';
 import '../database/payment_db.dart';
-import '../database/product_db.dart';
 import '../database/products_fatoras_db.dart';
 import '../database/user_db.dart';
 import '../models/fatora.dart';
 import '../models/fatora_product.dart';
 import '../models/payment.dart';
-import '../models/product.dart';
 import '../models/user.dart';
 
 class ImportService {
   final UserDB _userDB = UserDB();
-  final ProductDB _productDB = ProductDB();
+  // final ProductDB _productDB = ProductDB();
   final FatoraDB _fatoraDB = FatoraDB();
   final PaymentDB _paymentDB = PaymentDB();
   final FatoraProductsDB _fatoraProductsDB = FatoraProductsDB();
@@ -58,23 +56,23 @@ class ImportService {
         } catch (_) {}
       }
 
-      // 2. PRODUCTS
-      final products = (data['products'] ?? []) as List<dynamic>;
-      for (final p in products) {
-        try {
-          final product = Product.fromJson(Map<String, dynamic>.from(p as Map));
-          final existing = await _productDB.get(product.unified, txn);
-
-          if (existing == null) {
-            await _productDB.insert(product, txn);
-            productsCount++;
-          } else if (product.updatedAt > existing.updatedAt) {
-            // <-- SMART CHECK
-            await _productDB.update(product, txn);
-            productsCount++;
-          }
-        } catch (_) {}
-      }
+      // // 2. PRODUCTS
+      // final products = (data['products'] ?? []) as List<dynamic>;
+      // for (final p in products) {
+      //   try {
+      //     final product = Product.fromJson(Map<String, dynamic>.from(p as Map));
+      //     final existing = await _productDB.get(product.unified, txn);
+      //
+      //     if (existing == null) {
+      //       await _productDB.insert(product, txn);
+      //       productsCount++;
+      //     } else if (product.updatedAt > existing.updatedAt) {
+      //       // <-- SMART CHECK
+      //       await _productDB.update(product, txn);
+      //       productsCount++;
+      //     }
+      //   } catch (_) {}
+      // }
 
       // 3. FATORAS
       final fatoras = (data['fatoras'] ?? []) as List<dynamic>;

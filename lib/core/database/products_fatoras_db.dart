@@ -8,7 +8,7 @@ class FatoraProductsDB {
 
   Future<int> insert(FatoraProduct item, Transaction txn) async {
     final database = txn;
-    return database.insert("fatora_products", item.toMap());
+    return database.insert("fatora_items", item.toMap());
   }
 
   Future<List<FatoraProduct>> getByFatora(
@@ -18,7 +18,7 @@ class FatoraProductsDB {
     final database = txn;
 
     final result = await database.query(
-      "fatora_products",
+      "fatora_items",
       where: "fatoraUnified=? AND deletedAt IS NULL",
       whereArgs: [unified],
     );
@@ -30,7 +30,7 @@ class FatoraProductsDB {
     final database = txn;
 
     return database.update(
-      "fatora_products",
+      "fatora_items",
       item.toMap(),
       where: "unified=?",
       whereArgs: [item.unified],
@@ -41,7 +41,7 @@ class FatoraProductsDB {
     final database = txn;
 
     return database.update(
-      "fatora_products",
+      "fatora_items",
       {
         "deletedAt": DateTime.now().millisecondsSinceEpoch,
         "updatedAt": DateTime.now().millisecondsSinceEpoch,
@@ -55,7 +55,7 @@ class FatoraProductsDB {
     final database = txn;
 
     final result = await database.query(
-      "fatora_products",
+      "fatora_items",
       where: "unified=?",
       whereArgs: [unified],
     );
@@ -69,7 +69,7 @@ class FatoraProductsDB {
     final database = txn;
 
     final result = await database.query(
-      "fatora_products",
+      "fatora_items",
       where: "deletedAt IS NULL",
       orderBy: "updatedAt DESC",
     );
@@ -81,7 +81,7 @@ class FatoraProductsDB {
     final database = txn;
 
     final result = await database.query(
-      "fatora_products",
+      "fatora_items",
       where: "status=?",
       whereArgs: ["notScheduled"],
       orderBy: "updatedAt DESC",

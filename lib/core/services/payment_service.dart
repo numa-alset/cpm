@@ -22,6 +22,7 @@ class PaymentService {
       await _userRepository.changeBalance(
         payment.userUnified,
         -payment.amount,
+        payment.currency,
         txn,
       );
     });
@@ -47,7 +48,12 @@ class PaymentService {
       final updated = old.copyWith(status: Status.notScheduled);
       await _paymentRepository.update(updated, txn);
       await _paymentRepository.delete(unified, txn);
-      await _userRepository.changeBalance(old.userUnified, old.amount, txn);
+      await _userRepository.changeBalance(
+        old.userUnified,
+        old.amount,
+        old.currency,
+        txn,
+      );
     });
   }
 

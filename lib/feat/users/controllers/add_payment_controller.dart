@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/services/device_service.dart';
 import 'package:naji/core/services/payment_service.dart';
 
@@ -16,11 +17,17 @@ class AddPaymentController extends ChangeNotifier {
   }) : _paymentService = paymentService;
 
   DateTime selectedDate = DateTime.now();
+  Currency selectedCurrency = Currency.sy;
   bool isLoading = false;
   String? error;
 
   void setDate(DateTime date) {
     selectedDate = date;
+    notifyListeners();
+  }
+
+  void setCurrency(Currency currency) {
+    selectedCurrency = currency;
     notifyListeners();
   }
 
@@ -35,6 +42,7 @@ class AddPaymentController extends ChangeNotifier {
         userUnified: userUnified,
         amount: amount,
         date: selectedDate.millisecondsSinceEpoch,
+        currency: selectedCurrency,
         createdAt: DateTime.now().millisecondsSinceEpoch,
         updatedAt: DateTime.now().millisecondsSinceEpoch,
         deviceId: DeviceService.deviceIdKey,
