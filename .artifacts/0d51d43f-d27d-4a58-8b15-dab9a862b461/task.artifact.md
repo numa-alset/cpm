@@ -1,0 +1,24 @@
+# Multi-Currency Support Implementation Tasks
+
+- [ ] Core Models & Database
+    - [ ] Create `Currency` enum
+    - [ ] Update `User` model (totalSy, totalDollar)
+    - [ ] Update `Product` model (priceSy, priceDollar)
+    - [ ] Update `Fatora` model (currency field)
+    - [ ] Update `Payment` model (currency field)
+    - [ ] Update `DatabaseHelper` (schema changes & migration)
+- [ ] Data Access Layer
+    - [ ] Update `UserDB`, `FatoraDB`, `PaymentDB` (SQL queries & mapping)
+    - [ ] Update `UserDAO` (`updateBalance` with currency)
+    - [ ] Update `UserRepository` (`changeBalance` with currency)
+- [ ] Service Layer
+    - [ ] Update `InvoiceService` (pass currency to balance updates)
+    - [ ] Update `PaymentService` (pass currency to balance updates)
+- [ ] UI & Controllers
+    - [ ] Update `AddInvoiceController` (selected currency state)
+    - [ ] Update `AddPaymentController` (selected currency state)
+    - [ ] Update `AddInvoiceScreen` (currency selector UI)
+    - [ ] Update `AddPaymentScreen` (currency selector UI)
+    - [ ] Update `UserDetailsScreen` (display dual balances & symbols)
+    - [ ] Update `UsersScreen` & `UserCard` (display dual balances)
+    - [ ] Update `UserFormBottomSheet` (initial dual balance inputs)

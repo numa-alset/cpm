@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 
+import '../models/enum_status.dart';
 import '../models/user.dart';
 import 'database_helper.dart';
 
@@ -8,7 +9,12 @@ class UserDB {
 
   Future<int> insert(User user, Transaction txn) async {
     final database = txn;
-    return await database.insert("users", user.toMap());
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return await database.insert("users", {
+      ...user.toMap(),
+      "status": Status.notScheduled,
+      "updatedAt": now,
+    });
   }
 
   Future<List<User>> getAll(Transaction txn) async {
@@ -42,7 +48,11 @@ class UserDB {
 
     return await database.update(
       "users",
-      user.toMap(),
+      {
+        ...user.toMap(),
+        "status": Status.notScheduled,
+        "updatedAt": DateTime.now().millisecondsSinceEpoch,
+      },
       where: "unified=?",
       whereArgs: [user.unified],
     );
@@ -50,12 +60,10 @@ class UserDB {
 
   Future<int> delete(String unified, Transaction txn) async {
     final database = txn;
+    final now = DateTime.now().millisecondsSinceEpoch;
     return await database.update(
       "users",
-      {
-        "deletedAt": DateTime.now().millisecondsSinceEpoch,
-        "updatedAt": DateTime.now().millisecondsSinceEpoch,
-      },
+      {"deletedAt": now, "updatedAt": now, "status": Status.notScheduled},
       where: "unified=?",
       whereArgs: [unified],
     );

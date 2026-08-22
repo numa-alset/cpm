@@ -5,7 +5,6 @@ import 'package:naji/core/models/fatora.dart';
 import 'package:naji/core/models/fatora_product.dart';
 import 'package:naji/core/services/id_service.dart';
 import 'package:naji/core/services/invoice_service.dart';
-import 'package:naji/core/services/product_service.dart';
 
 class DraftInvoiceItem {
   String name;
@@ -49,8 +48,7 @@ class AddInvoiceController extends ChangeNotifier {
   AddInvoiceController({
     required this.userUnified,
     required InvoiceService invoiceService,
-  }) : _invoiceService = invoiceService
-     {
+  }) : _invoiceService = invoiceService {
     _init();
   }
 
@@ -71,8 +69,6 @@ class AddInvoiceController extends ChangeNotifier {
   Future<void> _init() async {
     addItem();
   }
-
-
 
   void setDate(DateTime date) {
     selectedDate = date;

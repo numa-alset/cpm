@@ -4,7 +4,6 @@ import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/services/invoice_service.dart';
-import 'package:naji/core/services/product_service.dart';
 import 'package:naji/feat/users/controllers/add_invoice_controller.dart';
 import 'package:provider/provider.dart';
 
@@ -18,7 +17,7 @@ class AddInvoiceScreen extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => AddInvoiceController(
         userUnified: userUnified,
-        invoiceService: GetIt.I<InvoiceService>()
+        invoiceService: GetIt.I<InvoiceService>(),
       ),
       child: const _AddInvoiceView(),
     );
