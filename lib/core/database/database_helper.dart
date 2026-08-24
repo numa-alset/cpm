@@ -21,6 +21,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
+      version: 1,
       onConfigure: _onConfigure,
       onCreate: _onCreate,
     );

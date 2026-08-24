@@ -31,12 +31,14 @@ class InvoiceItemDraft {
   );
 }
 
-class AddInvoiceController extends ChangeNotifier {
-  final String userUnified;
+class EditInvoiceController extends ChangeNotifier {
+  final Fatora invoice;
+  final List<FatoraProduct> invoiceProducts;
   final InvoiceService _invoiceService;
 
-  AddInvoiceController({
-    required this.userUnified,
+  EditInvoiceController({
+    required this.invoice,
+    required this.invoiceProducts,
     required InvoiceService invoiceService,
   }) : _invoiceService = invoiceService {
     _init();
@@ -45,8 +47,9 @@ class AddInvoiceController extends ChangeNotifier {
   DateTime selectedDate = DateTime.now();
   bool isLoading = false;
   String? error;
-
   List<InvoiceItemDraft> items = [];
+  late TextEditingController writerController;
+  late TextEditingController noteController;
 
   /// Calculate total for a specific currency
   double getTotalByCurrency(Currency currency) {
@@ -59,8 +62,24 @@ class AddInvoiceController extends ChangeNotifier {
   double get totalDollar => getTotalByCurrency(Currency.dollar);
   double get grandTotal => totalSy + totalDollar;
 
-  Future<void> _init() async {
-    addItem();
+  void _init() {
+    selectedDate = DateTime.fromMillisecondsSinceEpoch(invoice.date);
+    writerController = TextEditingController(text: invoice.writer);
+    noteController = TextEditingController(text: invoice.note ?? '');
+
+    // Convert existing products to drafts
+    items = invoiceProducts
+        .map((product) => InvoiceItemDraft(
+              name: product.productName,
+              price: product.price,
+              quantity: product.quantity,
+              currency: product.currency,
+            ))
+        .toList();
+
+    if (items.isEmpty) {
+      addItem();
+    }
   }
 
   void setDate(DateTime date) {
@@ -97,7 +116,7 @@ class AddInvoiceController extends ChangeNotifier {
     }
   }
 
-  Future<bool> saveInvoice({required String writer, String? note}) async {
+  Future<bool> saveInvoice() async {
     // Validation
     if (items.isEmpty) {
       error = "الرجاء إضافة منتج واحد على الأقل";
@@ -118,45 +137,44 @@ class AddInvoiceController extends ChangeNotifier {
       }
     }
 
+    if (writerController.text.trim().isEmpty) {
+      error = "الرجاء إدخال اسم الكاتب";
+      notifyListeners();
+      return false;
+    }
+
     isLoading = true;
     error = null;
     notifyListeners();
 
     try {
-      final now = DateTime.now().millisecondsSinceEpoch;
-
-      // Create Fatora (invoice header)
-      final fatora = Fatora(
-        unified: IdService.generate(),
-        userUnified: userUnified,
-        writer: writer.trim(),
+      // Create updated Fatora
+      final updatedFatora = invoice.copyWith(
+        writer: writerController.text.trim(),
         date: selectedDate.millisecondsSinceEpoch,
         totalSy: totalSy,
         totalDollar: totalDollar,
-        note: note?.trim().isEmpty == true ? null : note?.trim(),
-        createdAt: now,
-        updatedAt: now,
-        deviceId: DeviceService.deviceIdKey,
-        status: Status.notScheduled,
+        note: noteController.text.trim().isEmpty ? null : noteController.text.trim(),
+        updatedAt: DateTime.now().millisecondsSinceEpoch,
       );
 
-      // Create FatoraProducts (invoice items)
+      // Create updated FatoraProducts
       final fatoraProducts = items.map((item) {
         return FatoraProduct(
           unified: IdService.generate(),
-          fatoraUnified: fatora.unified,
+          fatoraUnified: updatedFatora.unified,
           productName: item.name.trim(),
           price: item.price,
           quantity: item.quantity,
           currency: item.currency,
-          createdAt: now,
-          updatedAt: now,
+          createdAt: DateTime.now().millisecondsSinceEpoch,
+          updatedAt: DateTime.now().millisecondsSinceEpoch,
           deviceId: DeviceService.deviceIdKey,
           status: Status.notScheduled,
         );
       }).toList();
 
-      await _invoiceService.createInvoice(fatora, fatoraProducts);
+      await _invoiceService.updateInvoice(updatedFatora, fatoraProducts);
 
       isLoading = false;
       notifyListeners();
@@ -167,5 +185,12 @@ class AddInvoiceController extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  @override
+  void dispose() {
+    writerController.dispose();
+    noteController.dispose();
+    super.dispose();
   }
 }

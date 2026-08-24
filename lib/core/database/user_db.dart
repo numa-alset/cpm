@@ -12,7 +12,7 @@ class UserDB {
     final now = DateTime.now().millisecondsSinceEpoch;
     return await database.insert("users", {
       ...user.toMap(),
-      "status": Status.notScheduled,
+      "status": Status.notScheduled.value,
       "updatedAt": now,
     });
   }
@@ -50,7 +50,7 @@ class UserDB {
       "users",
       {
         ...user.toMap(),
-        "status": Status.notScheduled,
+        "status": Status.notScheduled.value,
         "updatedAt": DateTime.now().millisecondsSinceEpoch,
       },
       where: "unified=?",
@@ -63,7 +63,7 @@ class UserDB {
     final now = DateTime.now().millisecondsSinceEpoch;
     return await database.update(
       "users",
-      {"deletedAt": now, "updatedAt": now, "status": Status.notScheduled},
+      {"deletedAt": now, "updatedAt": now, "status": Status.notScheduled.value},
       where: "unified=?",
       whereArgs: [unified],
     );

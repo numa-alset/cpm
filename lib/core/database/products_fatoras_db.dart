@@ -12,7 +12,7 @@ class FatoraProductsDB {
     final now = DateTime.now().millisecondsSinceEpoch;
     return database.insert("fatora_items", {
       ...item.toMap(),
-      "status": Status.notScheduled,
+      "status": Status.notScheduled.value,
       "updatedAt": now,
     });
   }
@@ -39,7 +39,7 @@ class FatoraProductsDB {
       "fatora_items",
       {
         ...item.toMap(),
-        "status": Status.notScheduled,
+        "status": Status.notScheduled.value,
         "updatedAt": DateTime.now().millisecondsSinceEpoch,
       },
       where: "unified=?",
@@ -53,7 +53,7 @@ class FatoraProductsDB {
 
     return database.update(
       "fatora_items",
-      {"deletedAt": now, "updatedAt": now, "status": Status.notScheduled},
+      {"deletedAt": now, "updatedAt": now, "status": Status.notScheduled.value},
       where: "unified=?",
       whereArgs: [unified],
     );

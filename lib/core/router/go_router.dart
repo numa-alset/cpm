@@ -6,7 +6,6 @@ import 'package:naji/feat/fatora_screen.dart';
 import 'package:naji/feat/home/screen/data_management_screen.dart';
 import 'package:naji/feat/home/screen/home_screen.dart';
 import 'package:naji/feat/payments/screen/payments_screen.dart';
-import 'package:naji/feat/products/screen/products_screen.dart';
 import 'package:naji/feat/register_screen.dart';
 import 'package:naji/feat/splash_screen.dart';
 import 'package:naji/feat/statistics/screen/statistics_screen.dart';

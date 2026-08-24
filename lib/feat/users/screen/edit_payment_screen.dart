@@ -3,36 +3,43 @@ import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/services/payment_service.dart';
-import 'package:naji/feat/users/controllers/add_payment_controller.dart';
+import 'package:naji/feat/users/controllers/edit_payment_controller.dart';
 import 'package:provider/provider.dart';
 
-class AddPaymentScreen extends StatelessWidget {
-  final String userUnified;
+class EditPaymentScreen extends StatelessWidget {
+  final dynamic payment;
 
-  const AddPaymentScreen({super.key, required this.userUnified});
+  const EditPaymentScreen({super.key, required this.payment});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => AddPaymentController(
-        userUnified: userUnified,
+      create: (_) => EditPaymentController(
+        payment: payment,
         paymentService: GetIt.I<PaymentService>(),
       ),
-      child: const _AddPaymentView(),
+      child: const _EditPaymentView(),
     );
   }
 }
 
-class _AddPaymentView extends StatefulWidget {
-  const _AddPaymentView();
+class _EditPaymentView extends StatefulWidget {
+  const _EditPaymentView();
 
   @override
-  State<_AddPaymentView> createState() => _AddPaymentViewState();
+  State<_EditPaymentView> createState() => _EditPaymentViewState();
 }
 
-class _AddPaymentViewState extends State<_AddPaymentView> {
+class _EditPaymentViewState extends State<_EditPaymentView> {
   final _formKey = GlobalKey<FormState>();
-  final _amountController = TextEditingController();
+  late TextEditingController _amountController;
+
+  @override
+  void initState() {
+    super.initState();
+    final controller = context.read<EditPaymentController>();
+    _amountController = TextEditingController(text: controller.amount.toString());
+  }
 
   @override
   void dispose() {
@@ -43,28 +50,34 @@ class _AddPaymentViewState extends State<_AddPaymentView> {
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final controller = context.read<AddPaymentController>();
+    final controller = context.read<EditPaymentController>();
     final amount = double.parse(_amountController.text.trim());
+    controller.setAmount(amount);
 
-    // Dismiss keyboard
     FocusScope.of(context).unfocus();
 
-    final success = await controller.savePayment(amount);
+    final success = await controller.savePayment();
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("تم إضافة الدفعة بنجاح"),
+          content: Text("تم تحديث الدفعة بنجاح"),
           backgroundColor: Colors.green,
         ),
       );
-      // Pass 'true' back so the previous screen knows to refresh the data
       Navigator.pop(context, true);
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(controller.error ?? "حدث خطأ"),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   Future<void> _pickDate(BuildContext context) async {
-    final controller = context.read<AddPaymentController>();
+    final controller = context.read<EditPaymentController>();
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: controller.selectedDate,
@@ -83,10 +96,13 @@ class _AddPaymentViewState extends State<_AddPaymentView> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = context.watch<AddPaymentController>();
+    final controller = context.watch<EditPaymentController>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text("إضافة دفعة مالية"), centerTitle: true),
+      appBar: AppBar(
+        title: const Text("تحديث الدفعة المالية"),
+        centerTitle: true,
+      ),
       body: controller.isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -118,7 +134,6 @@ class _AddPaymentViewState extends State<_AddPaymentView> {
                           ],
                         ),
                       ),
-
                     const Text(
                       "المبلغ",
                       style: TextStyle(
@@ -158,9 +173,7 @@ class _AddPaymentViewState extends State<_AddPaymentView> {
                         return null;
                       },
                     ),
-
                     const SizedBox(height: 24),
-
                     const Text(
                       "العملة",
                       style: TextStyle(
@@ -206,9 +219,7 @@ class _AddPaymentViewState extends State<_AddPaymentView> {
                         },
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
                     const Text(
                       "التاريخ",
                       style: TextStyle(
@@ -249,29 +260,43 @@ class _AddPaymentViewState extends State<_AddPaymentView> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 40),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 50,
+                            child: FilledButton.icon(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: Colors.grey.shade600,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.close),
+                              label: const Text("إلغاء"),
+                            ),
                           ),
                         ),
-                        onPressed: _submit,
-                        icon: const Icon(Icons.check),
-                        label: const Text(
-                          "حفظ الدفعة",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: SizedBox(
+                            height: 50,
+                            child: FilledButton.icon(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: _submit,
+                              icon: const Icon(Icons.check),
+                              label: const Text("حفظ التغييرات"),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),

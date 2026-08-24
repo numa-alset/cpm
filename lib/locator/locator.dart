@@ -20,6 +20,7 @@ import 'package:naji/core/services/backup_service.dart';
 import 'package:naji/core/services/device_service.dart';
 import 'package:naji/core/services/import_service.dart';
 import 'package:naji/core/services/invoice_service.dart';
+import 'package:naji/core/services/payment_service.dart';
 import 'package:naji/core/services/statistics_service.dart';
 import 'package:naji/core/services/sync_service.dart';
 import 'package:naji/core/services/transaction_service.dart';
@@ -77,6 +78,13 @@ Future<void> setupLocator() async {
   );
   getIt.registerLazySingleton(
     () => UserService(getIt<UserRepository>(), getIt<TransactionService>()),
+  );
+  getIt.registerLazySingleton(
+    () => PaymentService(
+      getIt<PaymentRepository>(),
+      getIt<UserRepository>(),
+      getIt<TransactionService>(),
+    ),
   );
 
   // IdService is static - no need to register an instance

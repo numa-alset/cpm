@@ -12,7 +12,7 @@ class PaymentDB {
     final now = DateTime.now().millisecondsSinceEpoch;
     return database.insert("payments", {
       ...payment.toMap(),
-      "status": Status.notScheduled,
+      "status": Status.notScheduled.value,
       "updatedAt": now,
     });
   }
@@ -36,7 +36,7 @@ class PaymentDB {
       "payments",
       {
         ...payment.toMap(),
-        "status": Status.notScheduled,
+        "status": Status.notScheduled.value,
         "updatedAt": DateTime.now().millisecondsSinceEpoch,
       },
       where: "unified=?",
@@ -50,7 +50,7 @@ class PaymentDB {
 
     return database.update(
       "payments",
-      {"deletedAt": now, "updatedAt": now, "status": Status.notScheduled},
+      {"deletedAt": now, "updatedAt": now, "status": Status.notScheduled.value},
       where: "unified=?",
       whereArgs: [unified],
     );

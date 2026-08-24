@@ -41,7 +41,7 @@ class _UsersView extends StatelessWidget {
             builder: (_) => UserFormBottomSheet(controller: controller),
           );
 
-          if (refresh == true) {
+          if (refresh == true && context.mounted) {
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(const SnackBar(content: Text("تمت إضافة المستخدم")));
@@ -213,7 +213,7 @@ class _UsersView extends StatelessWidget {
                             ),
                           );
 
-                          if (refresh == true) {
+                          if (refresh == true && context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text("تم تحديث المستخدم"),
