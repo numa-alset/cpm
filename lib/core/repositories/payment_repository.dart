@@ -44,4 +44,9 @@ class PaymentRepository extends BaseRepository<Payment> {
   Future<List<Payment>> getNotScheduled(Transaction txn) {
     return _paymentDAO.getNotScheduled(txn);
   }
+
+  @override
+  Future<int> markSync(String unified, Transaction txn) {
+    return _paymentDAO.markSync(unified, txn);
+  }
 }

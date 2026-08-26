@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
+import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/models/fatora.dart';
 import 'package:naji/core/models/fatora_product.dart';
 import 'package:naji/core/models/payment.dart';
@@ -14,6 +15,13 @@ import 'package:sqflite/sqflite.dart';
 
 enum SyncItemType { user, invoice, payment, fatoraProduct }
 
+class SyncDetail {
+  const SyncDetail({required this.label, required this.value});
+
+  final String label;
+  final String value;
+}
+
 class SyncItem {
   const SyncItem({
     required this.unified,
@@ -22,6 +30,7 @@ class SyncItem {
     required this.type,
     required this.originalObject,
     this.children = const [],
+    this.details = const [],
   });
 
   final String unified;
@@ -29,9 +38,20 @@ class SyncItem {
   final String subtitle;
   final SyncItemType type;
   final dynamic originalObject;
+
   final List<SyncItem> children;
+  final List<SyncDetail> details;
 
   bool get hasChildren => children.isNotEmpty;
+
+  bool get hasDetails => details.isNotEmpty;
+
+  bool get isExpandable {
+    return hasChildren ||
+        hasDetails ||
+        type == SyncItemType.invoice ||
+        type == SyncItemType.payment;
+  }
 }
 
 class HomeController extends ChangeNotifier {
@@ -79,15 +99,21 @@ class HomeController extends ChangeNotifier {
   int get totalCount => itemCount + childCount;
 
   int get userCount {
-    return _items.where((e) => e.type == SyncItemType.user).length;
+    return _items.where((item) => item.type == SyncItemType.user).length;
   }
 
   int get invoiceCount {
-    return _items.where((e) => e.type == SyncItemType.invoice).length;
+    return _items.where((item) => item.type == SyncItemType.invoice).length;
   }
 
   int get paymentCount {
-    return _items.where((e) => e.type == SyncItemType.payment).length;
+    return _items.where((item) => item.type == SyncItemType.payment).length;
+  }
+
+  int get productCount {
+    return _items
+        .where((item) => item.type == SyncItemType.fatoraProduct)
+        .length;
   }
 
   Future<void> loadData() async {
@@ -135,27 +161,34 @@ class HomeController extends ChangeNotifier {
   }) {
     final items = <SyncItem>[];
 
-    // ------------------------------------------------------------
+    final usersByUnified = <String, User>{
+      for (final user in users) user.unified: user,
+    };
+
+    // ============================================================
     // USERS
-    // ------------------------------------------------------------
+    // ============================================================
 
     for (final user in users) {
       items.add(
         SyncItem(
           unified: user.unified,
           title: user.name,
-          subtitle: user.location,
+          subtitle: user.location.isEmpty ? 'مستخدم' : user.location,
           type: SyncItemType.user,
           originalObject: user,
+          details: _userDetails(user),
         ),
       );
     }
 
-    // ------------------------------------------------------------
+    // ============================================================
     // PAYMENTS
-    // ------------------------------------------------------------
+    // ============================================================
 
     for (final payment in payments) {
+      final user = usersByUnified[payment.userUnified];
+
       items.add(
         SyncItem(
           unified: payment.unified,
@@ -163,13 +196,14 @@ class HomeController extends ChangeNotifier {
           subtitle: _paymentSubtitle(payment),
           type: SyncItemType.payment,
           originalObject: payment,
+          details: _paymentDetails(payment, userName: user?.name),
         ),
       );
     }
 
-    // ------------------------------------------------------------
-    // PRODUCTS GROUPED BY INVOICE
-    // ------------------------------------------------------------
+    // ============================================================
+    // GROUP PRODUCTS BY INVOICE
+    // ============================================================
 
     final productsByInvoice = <String, List<FatoraProduct>>{};
 
@@ -179,12 +213,14 @@ class HomeController extends ChangeNotifier {
           .add(product);
     }
 
-    // ------------------------------------------------------------
+    // ============================================================
     // INVOICES
-    // ------------------------------------------------------------
+    // ============================================================
 
     for (final invoice in invoices) {
       final invoiceProducts = productsByInvoice.remove(invoice.unified) ?? [];
+
+      final user = usersByUnified[invoice.userUnified];
 
       items.add(
         SyncItem(
@@ -196,72 +232,204 @@ class HomeController extends ChangeNotifier {
           children: invoiceProducts
               .map(_productToSyncItem)
               .toList(growable: false),
+          details: _invoiceDetails(invoice, userName: user?.name),
         ),
       );
     }
 
-    // ------------------------------------------------------------
-    // PRODUCTS WHOSE INVOICE IS ALREADY SCHEDULED
+    // ============================================================
+    // ORPHAN PRODUCTS
     //
-    // This can happen when a new item is added to an existing
-    // invoice after the invoice itself was already scheduled.
-    // ------------------------------------------------------------
+    // These are products whose invoice is not part of the
+    // unscheduled invoice list.
+    //
+    // We keep them visible instead of losing them.
+    // ============================================================
 
     for (final entry in productsByInvoice.entries) {
-      final parentInvoice = invoices.cast<Fatora?>().firstWhere(
-        (invoice) => invoice?.unified == entry.key,
-        orElse: () => null,
-      );
-
-      if (parentInvoice != null) {
-        items.add(
-          SyncItem(
-            unified: parentInvoice.unified,
-            title: 'تعديل فاتورة',
-            subtitle: 'تمت إضافة عناصر جديدة',
-            type: SyncItemType.invoice,
-            originalObject: parentInvoice,
-            children: entry.value
-                .map(_productToSyncItem)
-                .toList(growable: false),
-          ),
-        );
-      } else {
-        // We don't know the parent invoice.
-        // Keep the items visible instead of losing them.
-        items.addAll(entry.value.map(_productToSyncItem));
+      for (final product in entry.value) {
+        items.add(_productToSyncItem(product));
       }
     }
 
     return items;
   }
 
-  SyncItem _productToSyncItem(FatoraProduct product) {
-    return SyncItem(
-      unified: product.unified,
-      title: product.productName,
-      subtitle: 'الكمية: ${product.quantity} • الإجمالي: ${product.total}',
-      type: SyncItemType.fatoraProduct,
-      originalObject: product,
-    );
+  // ============================================================
+  // USER
+  // ============================================================
+
+  List<SyncDetail> _userDetails(User user) {
+    final details = <SyncDetail>[];
+
+    if (user.location.trim().isNotEmpty) {
+      details.add(SyncDetail(label: 'الموقع', value: user.location));
+    }
+
+    if (user.totalSy != 0) {
+      details.add(
+        SyncDetail(
+          label: 'الرصيد السوري',
+          value: _formatMoney(user.totalSy, Currency.sy),
+        ),
+      );
+    }
+
+    if (user.totalDollar != 0) {
+      details.add(
+        SyncDetail(
+          label: 'الرصيد بالدولار',
+          value: _formatMoney(user.totalDollar, Currency.dollar),
+        ),
+      );
+    }
+
+    return details;
   }
 
+  // ============================================================
+  // PAYMENT
+  // ============================================================
+
   String _paymentSubtitle(Payment payment) {
-    return '${payment.amount} ${payment.currency}';
+    return _formatMoney(payment.amount, payment.currency);
   }
+
+  List<SyncDetail> _paymentDetails(Payment payment, {String? userName}) {
+    final details = <SyncDetail>[];
+
+    if (userName != null && userName.trim().isNotEmpty) {
+      details.add(SyncDetail(label: 'العميل / المورد', value: userName));
+    }
+
+    details.add(
+      SyncDetail(
+        label: 'المبلغ',
+        value: _formatMoney(payment.amount, payment.currency),
+      ),
+    );
+
+    details.add(SyncDetail(label: 'التاريخ', value: _formatDate(payment.date)));
+
+    return details;
+  }
+
+  // ============================================================
+  // INVOICE
+  // ============================================================
 
   String _invoiceSubtitle(Fatora invoice) {
     final parts = <String>[];
 
     if (invoice.totalSy != 0) {
-      parts.add('${invoice.totalSy} ل.س');
+      parts.add(_formatMoney(invoice.totalSy, Currency.sy));
     }
 
     if (invoice.totalDollar != 0) {
-      parts.add('${invoice.totalDollar} \$');
+      parts.add(_formatMoney(invoice.totalDollar, Currency.dollar));
     }
 
     return parts.isEmpty ? 'بدون مبلغ' : parts.join(' • ');
+  }
+
+  List<SyncDetail> _invoiceDetails(Fatora invoice, {String? userName}) {
+    final details = <SyncDetail>[];
+
+    if (userName != null && userName.trim().isNotEmpty) {
+      details.add(SyncDetail(label: 'العميل / المورد', value: userName));
+    }
+
+    details.add(SyncDetail(label: 'التاريخ', value: _formatDate(invoice.date)));
+
+    if (invoice.writer.trim().isNotEmpty) {
+      details.add(SyncDetail(label: 'الكاتب', value: invoice.writer));
+    }
+
+    if (invoice.totalSy != 0) {
+      details.add(
+        SyncDetail(
+          label: 'المجموع السوري',
+          value: _formatMoney(invoice.totalSy, Currency.sy),
+        ),
+      );
+    }
+
+    if (invoice.totalDollar != 0) {
+      details.add(
+        SyncDetail(
+          label: 'المجموع بالدولار',
+          value: _formatMoney(invoice.totalDollar, Currency.dollar),
+        ),
+      );
+    }
+
+    if (invoice.note != null && invoice.note!.trim().isNotEmpty) {
+      details.add(SyncDetail(label: 'ملاحظات', value: invoice.note!));
+    }
+
+    return details;
+  }
+
+  // ============================================================
+  // PRODUCT
+  // ============================================================
+
+  SyncItem _productToSyncItem(FatoraProduct product) {
+    return SyncItem(
+      unified: product.unified,
+      title: product.productName,
+      subtitle: _formatMoney(product.total, product.currency),
+      type: SyncItemType.fatoraProduct,
+      originalObject: product,
+      details: [
+        SyncDetail(label: 'الكمية', value: _formatNumber(product.quantity)),
+        SyncDetail(
+          label: 'سعر الوحدة',
+          value: _formatMoney(product.price, product.currency),
+        ),
+        SyncDetail(
+          label: 'الإجمالي',
+          value: _formatMoney(product.total, product.currency),
+        ),
+      ],
+    );
+  }
+
+  // ============================================================
+  // FORMATTING
+  // ============================================================
+
+  String _formatMoney(double amount, Currency currency) {
+    final value = _formatNumber(amount);
+
+    switch (currency) {
+      case Currency.sy:
+        return '$value ل.س';
+
+      case Currency.dollar:
+        return '$value \$';
+    }
+  }
+
+  String _formatNumber(double value) {
+    if (value == value.roundToDouble()) {
+      return value.toInt().toString();
+    }
+
+    return value.toStringAsFixed(2);
+  }
+
+  String _formatDate(int timestamp) {
+    // Supports both milliseconds and seconds timestamps.
+    final milliseconds = timestamp < 100000000000
+        ? timestamp * 1000
+        : timestamp;
+
+    final date = DateTime.fromMillisecondsSinceEpoch(milliseconds);
+
+    return '${date.day.toString().padLeft(2, '0')}/'
+        '${date.month.toString().padLeft(2, '0')}/'
+        '${date.year}';
   }
 
   // ============================================================
@@ -397,8 +565,6 @@ class HomeController extends ChangeNotifier {
   }
 
   bool _shareWasAccepted(ShareResult result) {
-    // ShareResultStatus.dismissed means the user closed/cancelled
-    // the share sheet.
     return result.status != ShareResultStatus.dismissed;
   }
 
@@ -407,28 +573,20 @@ class HomeController extends ChangeNotifier {
   // ============================================================
 
   Future<void> _updateItemStatusInTxn(SyncItem item, Transaction txn) async {
-    print(item.type);
-    print((item.originalObject as User).status);
     switch (item.type) {
       case SyncItemType.user:
-        final user = item.originalObject as User;
-
-        await _userService.markScheduled(user, txn);
-
+        await _userService.markScheduled(item.originalObject as User, txn);
         break;
 
       case SyncItemType.invoice:
-        final invoice = item.originalObject as Fatora;
-
-        await _invoiceService.markScheduled(invoice, txn);
-
+        await _invoiceService.markScheduled(item.originalObject as Fatora, txn);
         break;
 
       case SyncItemType.payment:
-        final payment = item.originalObject as Payment;
-
-        await _paymentService.markScheduled(payment, txn);
-
+        await _paymentService.markScheduled(
+          item.originalObject as Payment,
+          txn,
+        );
         break;
 
       case SyncItemType.fatoraProduct:
@@ -436,7 +594,6 @@ class HomeController extends ChangeNotifier {
           item.originalObject as FatoraProduct,
           txn,
         );
-
         break;
     }
   }

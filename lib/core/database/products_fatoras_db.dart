@@ -1,3 +1,4 @@
+import 'package:naji/core/models/enum_status.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../models/fatora_product.dart';
@@ -87,5 +88,16 @@ class FatoraProductsDB {
     );
 
     return result.map((e) => FatoraProduct.fromMap(e)).toList();
+  }
+
+  Future<int> markSync(String unified, Transaction txn) async {
+    final database = txn;
+
+    return database.update(
+      "fatora_items",
+      {"status": Status.scheduled.value},
+      where: "unified=?",
+      whereArgs: [unified],
+    );
   }
 }

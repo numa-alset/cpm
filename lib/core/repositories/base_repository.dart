@@ -12,4 +12,6 @@ abstract class BaseRepository<T> {
   Future<List<T>> getAll(Transaction txn);
 
   Future<List<T>> getNotScheduled(Transaction txn);
+
+  Future<int> markSync(String unified, Transaction txn);
 }

@@ -1,5 +1,4 @@
 import 'package:naji/core/models/currency.dart';
-import 'package:naji/core/models/enum_status.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database/user_db.dart';
@@ -73,12 +72,11 @@ class UserDAO extends BaseDAO<User> {
 
   @override
   Future<List<User>> getNotScheduled(Transaction txn) {
-    final allFatoras = userDB.getAll(txn);
-    final filteres = allFatoras.then(
-      (fatoras) => fatoras
-          .where((fatora) => fatora.status == Status.notScheduled)
-          .toList(),
-    );
-    return filteres;
+    return userDB.getUnsynced(txn);
+  }
+
+  @override
+  Future<int> markSync(String unified, Transaction txn) {
+    return userDB.markSync(unified, txn);
   }
 }

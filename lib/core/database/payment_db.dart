@@ -1,3 +1,4 @@
+import 'package:naji/core/models/enum_status.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../models/payment.dart';
@@ -72,5 +73,16 @@ class PaymentDB {
     );
 
     return result.map((e) => Payment.fromMap(e)).toList();
+  }
+
+  Future<int> markSync(String unified, Transaction txn) async {
+    final database = txn;
+
+    return database.update(
+      "payments",
+      {"status": Status.scheduled.value},
+      where: "unified=?",
+      whereArgs: [unified],
+    );
   }
 }

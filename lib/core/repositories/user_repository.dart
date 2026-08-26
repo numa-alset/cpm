@@ -41,4 +41,9 @@ class UserRepository extends BaseRepository<User> {
   Future<List<User>> getNotScheduled(Transaction txn) {
     return _userDAO.getNotScheduled(txn);
   }
+
+  @override
+  Future<int> markSync(String unified, Transaction txn) {
+    return _userDAO.markSync(unified, txn);
+  }
 }

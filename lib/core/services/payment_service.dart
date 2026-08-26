@@ -89,9 +89,6 @@ class PaymentService {
   }
 
   Future<int> markScheduled(Payment payment, Transaction txn) async {
-    return await _paymentRepository.update(
-      payment.copyWith(status: Status.scheduled),
-      txn,
-    );
+    return await _paymentRepository.markSync(payment.unified, txn);
   }
 }

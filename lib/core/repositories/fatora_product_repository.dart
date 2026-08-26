@@ -44,4 +44,9 @@ class FatoraProductRepository extends BaseRepository<FatoraProduct> {
   Future<List<FatoraProduct>> getNotScheduled(Transaction txn) {
     return _invoiceItemDAO.getNotScheduled(txn);
   }
+
+  @override
+  Future<int> markSync(String unified, Transaction txn) {
+    return _invoiceItemDAO.markSync(unified, txn);
+  }
 }

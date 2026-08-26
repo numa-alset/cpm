@@ -1,5 +1,4 @@
 import 'package:naji/core/database/payment_db.dart';
-import 'package:naji/core/models/enum_status.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../models/payment.dart';
@@ -69,12 +68,11 @@ class PaymentDAO extends BaseDAO<Payment> {
 
   @override
   Future<List<Payment>> getNotScheduled(Transaction txn) {
-    final allFatoras = paymentDB.getAll(txn);
-    final filteres = allFatoras.then(
-      (fatoras) => fatoras
-          .where((fatora) => fatora.status == Status.notScheduled)
-          .toList(),
-    );
-    return filteres;
+    return paymentDB.getUnsynced(txn);
+  }
+
+  @override
+  Future<int> markSync(String unified, Transaction txn) {
+    return paymentDB.markSync(unified, txn);
   }
 }

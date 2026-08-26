@@ -128,10 +128,7 @@ class UserService {
   }
 
   Future<int> markScheduled(User user, Transaction txn) async {
-    return await _userRepository.update(
-      user.copyWith(status: Status.scheduled),
-      txn,
-    );
+    return await _userRepository.markSync(user.unified, txn);
   }
 
   String generateUUID() {

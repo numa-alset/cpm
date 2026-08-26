@@ -77,4 +77,15 @@ class UserDB {
 
     return result.map((e) => User.fromMap(e)).toList();
   }
+
+  Future<int> markSync(String unified, Transaction txn) async {
+    final database = txn;
+
+    return await database.update(
+      "users",
+      {"status": Status.scheduled.value},
+      where: "unified=?",
+      whereArgs: [unified],
+    );
+  }
 }

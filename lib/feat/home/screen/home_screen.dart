@@ -91,6 +91,10 @@ class _HomeBody extends StatelessWidget {
   }
 }
 
+// ============================================================
+// SUMMARY
+// ============================================================
+
 class _SummaryCard extends StatelessWidget {
   const _SummaryCard({required this.controller});
 
@@ -98,22 +102,22 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'بيانات بانتظار الجدولة',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            Text('بيانات بانتظار الجدولة', style: theme.textTheme.titleLarge),
 
             const SizedBox(height: 8),
 
             Text(
-              '${controller.itemCount} عناصر رئيسية',
-              style: Theme.of(context).textTheme.bodyMedium,
+              '${controller.itemCount} عناصر رئيسية'
+              '${controller.productCount > 0 ? ' • ${controller.productCount} منتجات' : ''}',
+              style: theme.textTheme.bodyMedium,
             ),
 
             const SizedBox(height: 16),
@@ -183,6 +187,10 @@ class _SummaryItem extends StatelessWidget {
   }
 }
 
+// ============================================================
+// SCHEDULE ALL
+// ============================================================
+
 class _ScheduleAllButton extends StatelessWidget {
   const _ScheduleAllButton({required this.controller});
 
@@ -190,48 +198,38 @@ class _ScheduleAllButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FilledButton.icon(
-      onPressed: controller.isScheduling
-          ? null
-          : () async {
-              final success = await controller.scheduleAll();
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton.icon(
+        onPressed: controller.isScheduling
+            ? null
+            : () async {
+                final success = await controller.scheduleAll();
 
-              if (!context.mounted || !success) {
-                return;
-              }
+                if (!context.mounted || !success) {
+                  return;
+                }
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('تمت جدولة البيانات بنجاح')),
-              );
-            },
-      icon: controller.isScheduling
-          ? const SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : const Icon(Icons.share_outlined),
-      label: Text(controller.isScheduling ? 'جاري الجدولة...' : 'جدولة الكل'),
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('تمت جدولة البيانات بنجاح')),
+                );
+              },
+        icon: controller.isScheduling
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.share_outlined),
+        label: Text(controller.isScheduling ? 'جاري الجدولة...' : 'جدولة الكل'),
+      ),
     );
   }
 }
 
-class _ChildItem extends StatelessWidget {
-  const _ChildItem({required this.child});
-
-  final SyncItem child;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      dense: true,
-      contentPadding: const EdgeInsetsDirectional.only(start: 72, end: 16),
-      leading: const Icon(Icons.inventory_2_outlined, size: 20),
-      title: Text(child.title),
-      subtitle: Text(child.subtitle),
-    );
-  }
-}
+// ============================================================
+// SYNC ITEM CARD
+// ============================================================
 
 class _SyncItemCard extends StatelessWidget {
   const _SyncItemCard({
@@ -248,13 +246,29 @@ class _SyncItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       clipBehavior: Clip.antiAlias,
-      child: item.hasChildren
+      child: item.isExpandable
           ? ExpansionTile(
               leading: _ItemIcon(type: item.type),
-              title: Text(item.title),
-              subtitle: Text(item.subtitle),
+              title: Text(
+                item.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: Text(
+                item.subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
               children: [
-                ...item.children.map((child) => _ChildItem(child: child)),
+                if (item.hasDetails) _SyncDetails(details: item.details),
+
+                if (item.hasChildren) ...[
+                  if (item.hasDetails) const Divider(height: 1),
+
+                  _ChildrenHeader(count: item.children.length),
+
+                  ...item.children.map((child) => _ChildItem(child: child)),
+                ],
 
                 const Divider(height: 1),
 
@@ -263,8 +277,16 @@ class _SyncItemCard extends StatelessWidget {
             )
           : ListTile(
               leading: _ItemIcon(type: item.type),
-              title: Text(item.title),
-              subtitle: Text(item.subtitle),
+              title: Text(
+                item.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: Text(
+                item.subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
               trailing: IconButton(
                 tooltip: 'جدولة',
                 onPressed: enabled ? onSchedule : null,
@@ -274,6 +296,133 @@ class _SyncItemCard extends StatelessWidget {
     );
   }
 }
+
+// ============================================================
+// DETAILS
+// ============================================================
+
+class _SyncDetails extends StatelessWidget {
+  const _SyncDetails({required this.details});
+
+  final List<SyncDetail> details;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(72, 8, 16, 12),
+      child: Column(
+        children: [
+          for (final detail in details)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Text(detail.label, style: theme.textTheme.bodySmall),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      detail.value,
+                      textAlign: TextAlign.end,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================
+// CHILDREN
+// ============================================================
+
+class _ChildrenHeader extends StatelessWidget {
+  const _ChildrenHeader({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(
+        start: 72,
+        end: 16,
+        top: 8,
+        bottom: 4,
+      ),
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: Text(
+          'المنتجات ($count)',
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+      ),
+    );
+  }
+}
+
+class _ChildItem extends StatelessWidget {
+  const _ChildItem({required this.child});
+
+  final SyncItem child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(start: 72, end: 16),
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        dense: true,
+        leading: const Icon(Icons.inventory_2_outlined, size: 20),
+        title: Text(child.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: child.details.isEmpty
+            ? null
+            : _ProductDetails(details: child.details),
+        trailing: Text(
+          child.subtitle,
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductDetails extends StatelessWidget {
+  const _ProductDetails({required this.details});
+
+  final List<SyncDetail> details;
+
+  @override
+  Widget build(BuildContext context) {
+    final quantity = details.where((e) => e.label == 'الكمية').firstOrNull;
+
+    final unitPrice = details.where((e) => e.label == 'سعر الوحدة').firstOrNull;
+
+    if (quantity == null || unitPrice == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Text('${quantity.value} × ${unitPrice.value}');
+  }
+}
+
+// ============================================================
+// ICON
+// ============================================================
 
 class _ItemIcon extends StatelessWidget {
   const _ItemIcon({required this.type});
@@ -298,6 +447,10 @@ class _ItemIcon extends StatelessWidget {
   }
 }
 
+// ============================================================
+// SCHEDULE ACTION
+// ============================================================
+
 class _ScheduleAction extends StatelessWidget {
   const _ScheduleAction({required this.enabled, required this.onPressed});
 
@@ -319,6 +472,10 @@ class _ScheduleAction extends StatelessWidget {
     );
   }
 }
+
+// ============================================================
+// EMPTY
+// ============================================================
 
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
@@ -350,6 +507,10 @@ class _EmptyState extends StatelessWidget {
     );
   }
 }
+
+// ============================================================
+// ERROR
+// ============================================================
 
 class _ErrorState extends StatelessWidget {
   const _ErrorState({required this.message, required this.onRetry});

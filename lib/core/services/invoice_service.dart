@@ -242,20 +242,14 @@ class InvoiceService {
   }
 
   Future<int> markScheduled(Fatora fatora, Transaction txn) async {
-    return await _fatoraRepository.update(
-      fatora.copyWith(status: Status.scheduled),
-      txn,
-    );
+    return await _fatoraRepository.markSync(fatora.unified, txn);
   }
 
   Future<int> markProductScheduled(
     FatoraProduct product,
     Transaction txn,
   ) async {
-    return await _fatoraProductRepository.update(
-      product.copyWith(status: Status.scheduled),
-      txn,
-    );
+    return await _fatoraProductRepository.markSync(product.unified, txn);
   }
 
   String generateUUID() {

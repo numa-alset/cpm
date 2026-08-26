@@ -1,5 +1,4 @@
 import 'package:naji/core/database/fatora_db.dart';
-import 'package:naji/core/models/enum_status.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../models/fatora.dart';
@@ -103,12 +102,11 @@ class FatoraDAO extends BaseDAO<Fatora> {
 
   @override
   Future<List<Fatora>> getNotScheduled(Transaction txn) {
-    final allFatoras = fatoraDB.getAll(txn);
-    final filteres = allFatoras.then(
-      (fatoras) => fatoras
-          .where((fatora) => fatora.status == Status.notScheduled)
-          .toList(),
-    );
-    return filteres;
+    return fatoraDB.getUnsynced(txn);
+  }
+
+  @override
+  Future<int> markSync(String unified, Transaction txn) {
+    return fatoraDB.markSync(unified, txn);
   }
 }
