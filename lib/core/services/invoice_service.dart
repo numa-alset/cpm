@@ -1,6 +1,7 @@
 import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/models/enum_status.dart';
 import 'package:naji/core/services/id_service.dart';
+import 'package:sqflite/sqflite.dart';
 
 import '../models/fatora.dart';
 import '../models/fatora_product.dart';
@@ -102,7 +103,10 @@ class InvoiceService {
         status: Status.notScheduled,
         updatedAt: DateTime.now().millisecondsSinceEpoch,
       );
-      await _fatoraRepository.update(fatora, txn);
+      await _fatoraRepository.update(
+        fatora.copyWith(status: Status.notScheduled),
+        txn,
+      );
 
       for (var item in items) {
         item = item.copyWith(
@@ -112,7 +116,10 @@ class InvoiceService {
           createdAt: DateTime.now().millisecondsSinceEpoch,
           updatedAt: DateTime.now().millisecondsSinceEpoch,
         );
-        await _fatoraProductRepository.create(item, txn);
+        await _fatoraProductRepository.create(
+          item.copyWith(status: Status.notScheduled),
+          txn,
+        );
       }
 
       final newSyTotal = items
@@ -232,6 +239,23 @@ class InvoiceService {
     return await _transactionService.runTransaction((txn) async {
       return await _fatoraProductRepository.getNotScheduled(txn);
     });
+  }
+
+  Future<int> markScheduled(Fatora fatora, Transaction txn) async {
+    return await _fatoraRepository.update(
+      fatora.copyWith(status: Status.scheduled),
+      txn,
+    );
+  }
+
+  Future<int> markProductScheduled(
+    FatoraProduct product,
+    Transaction txn,
+  ) async {
+    return await _fatoraProductRepository.update(
+      product.copyWith(status: Status.scheduled),
+      txn,
+    );
   }
 
   String generateUUID() {

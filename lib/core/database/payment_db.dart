@@ -1,6 +1,5 @@
 import 'package:sqflite/sqflite.dart';
 
-import '../models/enum_status.dart';
 import '../models/payment.dart';
 import 'database_helper.dart';
 
@@ -10,11 +9,7 @@ class PaymentDB {
   Future<int> insert(Payment payment, Transaction txn) async {
     final database = txn;
     final now = DateTime.now().millisecondsSinceEpoch;
-    return database.insert("payments", {
-      ...payment.toMap(),
-      "status": Status.notScheduled.value,
-      "updatedAt": now,
-    });
+    return database.insert("payments", {...payment.toMap(), "updatedAt": now});
   }
 
   Future<List<Payment>> getAll(Transaction txn) async {
@@ -34,11 +29,7 @@ class PaymentDB {
 
     return database.update(
       "payments",
-      {
-        ...payment.toMap(),
-        "status": Status.notScheduled.value,
-        "updatedAt": DateTime.now().millisecondsSinceEpoch,
-      },
+      {...payment.toMap(), "updatedAt": DateTime.now().millisecondsSinceEpoch},
       where: "unified=?",
       whereArgs: [payment.unified],
     );
@@ -50,7 +41,7 @@ class PaymentDB {
 
     return database.update(
       "payments",
-      {"deletedAt": now, "updatedAt": now, "status": Status.notScheduled.value},
+      {"deletedAt": now, "updatedAt": now},
       where: "unified=?",
       whereArgs: [unified],
     );

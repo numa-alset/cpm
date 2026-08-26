@@ -1,10 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
-import 'package:naji/core/database/fatora_db.dart';
-import 'package:naji/core/database/payment_db.dart';
-import 'package:naji/core/database/products_fatoras_db.dart';
-import 'package:naji/core/database/user_db.dart';
-import 'package:naji/core/models/enum_status.dart';
 import 'package:naji/core/models/fatora.dart';
 import 'package:naji/core/models/fatora_product.dart';
 import 'package:naji/core/models/payment.dart';
@@ -15,18 +10,12 @@ import 'package:naji/core/services/payment_service.dart';
 import 'package:naji/core/services/transaction_service.dart';
 import 'package:naji/core/services/user_service.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:sqflite/sqflite.dart';
 
 enum SyncItemType { user, invoice, payment, fatoraProduct }
 
 class SyncItem {
-  final String unified;
-  final String title;
-  final String subtitle;
-  final SyncItemType type;
-  final dynamic originalObject;
-  final List<SyncItem> children;
-
-  SyncItem({
+  const SyncItem({
     required this.unified,
     required this.title,
     required this.subtitle,
@@ -34,26 +23,81 @@ class SyncItem {
     required this.originalObject,
     this.children = const [],
   });
+
+  final String unified;
+  final String title;
+  final String subtitle;
+  final SyncItemType type;
+  final dynamic originalObject;
+  final List<SyncItem> children;
+
+  bool get hasChildren => children.isNotEmpty;
 }
 
 class HomeController extends ChangeNotifier {
-  final UserService _userService = GetIt.I<UserService>();
-  final InvoiceService _invoiceService = GetIt.I<InvoiceService>();
-  final PaymentService _paymentService = GetIt.I<PaymentService>();
-  final BackupService _backupService = GetIt.I<BackupService>();
-  final TransactionService _transactionService = GetIt.I<TransactionService>();
+  HomeController({
+    UserService? userService,
+    InvoiceService? invoiceService,
+    PaymentService? paymentService,
+    BackupService? backupService,
+    TransactionService? transactionService,
+  }) : _userService = userService ?? GetIt.I<UserService>(),
+       _invoiceService = invoiceService ?? GetIt.I<InvoiceService>(),
+       _paymentService = paymentService ?? GetIt.I<PaymentService>(),
+       _backupService = backupService ?? GetIt.I<BackupService>(),
+       _transactionService =
+           transactionService ?? GetIt.I<TransactionService>();
 
-  List<SyncItem> unscheduledItems = [];
-  bool isLoading = true;
-  String? error;
+  final UserService _userService;
+  final InvoiceService _invoiceService;
+  final PaymentService _paymentService;
+  final BackupService _backupService;
+  final TransactionService _transactionService;
+
+  List<SyncItem> _items = [];
+
+  bool _isLoading = false;
+  bool _isScheduling = false;
+  String? _error;
+
+  List<SyncItem> get unscheduledItems => List.unmodifiable(_items);
+
+  bool get isLoading => _isLoading;
+
+  bool get isScheduling => _isScheduling;
+
+  String? get error => _error;
+
+  bool get hasItems => _items.isNotEmpty;
+
+  int get itemCount => _items.length;
+
+  int get childCount {
+    return _items.fold(0, (total, item) => total + item.children.length);
+  }
+
+  int get totalCount => itemCount + childCount;
+
+  int get userCount {
+    return _items.where((e) => e.type == SyncItemType.user).length;
+  }
+
+  int get invoiceCount {
+    return _items.where((e) => e.type == SyncItemType.invoice).length;
+  }
+
+  int get paymentCount {
+    return _items.where((e) => e.type == SyncItemType.payment).length;
+  }
 
   Future<void> loadData() async {
-    isLoading = true;
-    error = null;
+    if (_isScheduling) return;
+
+    _isLoading = true;
+    _error = null;
     notifyListeners();
 
     try {
-      // نجلب فقط البيانات غير المجدولة
       final results = await Future.wait([
         _userService.getNotScheduledUsers(),
         _invoiceService.getNotScheduledInvoices(),
@@ -61,209 +105,346 @@ class HomeController extends ChangeNotifier {
         _invoiceService.getNotScheduledInvoicesProducts(),
       ]);
 
-      final unscheduledUsers = results[0] as List<User>;
-      final unscheduledInvoices = results[2] as List<Fatora>;
-      final unscheduledPayments = results[3] as List<Payment>;
-      final unscheduledFatoraProducts = results[4] as List<FatoraProduct>;
+      final users = results[0] as List<User>;
+      final invoices = results[1] as List<Fatora>;
+      final payments = results[2] as List<Payment>;
+      final products = results[3] as List<FatoraProduct>;
 
-      final List<SyncItem> items = [];
-
-      items.addAll(
-        unscheduledUsers.map(
-          (u) => SyncItem(
-            unified: u.unified,
-            title: u.name,
-            subtitle: 'مستخدم',
-            type: SyncItemType.user,
-            originalObject: u,
-          ),
-        ),
+      _items = _buildItems(
+        users: users,
+        invoices: invoices,
+        payments: payments,
+        products: products,
       );
+    } catch (e, stackTrace) {
+      debugPrint('HomeController.loadData error: $e');
+      debugPrintStack(stackTrace: stackTrace);
 
-      items.addAll(
-        unscheduledPayments.map(
-          (p) => SyncItem(
-            unified: p.unified,
-            title: 'دفعة نقدية',
-            subtitle: 'المبلغ: ${p.amount}',
-            type: SyncItemType.payment,
-            originalObject: p,
-          ),
-        ),
-      );
-
-      final Map<String, List<FatoraProduct>> productsByInvoice = {};
-      for (var fp in unscheduledFatoraProducts) {
-        productsByInvoice.putIfAbsent(fp.fatoraUnified, () => []).add(fp);
-      }
-
-      for (var i in unscheduledInvoices) {
-        final productsForThisInvoice =
-            productsByInvoice.remove(i.unified) ?? [];
-
-        final children = productsForThisInvoice
-            .map(
-              (fp) => SyncItem(
-                unified: fp.unified,
-                title: fp.productName,
-                subtitle: 'الكمية: ${fp.quantity} | الإجمالي: ${fp.total}',
-                type: SyncItemType.fatoraProduct,
-                originalObject: fp,
-              ),
-            )
-            .toList();
-
-        items.add(
-          SyncItem(
-            unified: i.unified,
-            title: 'فاتورة',
-            subtitle: 'المجموع: ${i.total}',
-            type: SyncItemType.invoice,
-            originalObject: i,
-            children: children,
-          ),
-        );
-      }
-
-      for (var entry in productsByInvoice.entries) {
-        final parentInvoice = await _invoiceService.getInvoice(entry.key);
-        final children = entry.value
-            .map(
-              (fp) => SyncItem(
-                unified: fp.unified,
-                title: fp.productName,
-                subtitle: 'الكمية: ${fp.quantity} | الإجمالي: ${fp.total}',
-                type: SyncItemType.fatoraProduct,
-                originalObject: fp,
-              ),
-            )
-            .toList();
-
-        if (parentInvoice != null) {
-          items.add(
-            SyncItem(
-              unified: parentInvoice.unified,
-              title: 'تعديلات فاتورة',
-              subtitle: 'تم إضافة عناصر جديدة',
-              type: SyncItemType.invoice,
-              originalObject: parentInvoice,
-              children: children,
-            ),
-          );
-        } else {
-          items.addAll(children);
-        }
-      }
-
-      unscheduledItems = items;
-    } catch (e) {
-      error = "حدث خطأ أثناء تحميل البيانات: $e";
+      _error = 'حدث خطأ أثناء تحميل البيانات.';
     } finally {
-      isLoading = false;
+      _isLoading = false;
       notifyListeners();
     }
   }
 
+  List<SyncItem> _buildItems({
+    required List<User> users,
+    required List<Fatora> invoices,
+    required List<Payment> payments,
+    required List<FatoraProduct> products,
+  }) {
+    final items = <SyncItem>[];
+
+    // ------------------------------------------------------------
+    // USERS
+    // ------------------------------------------------------------
+
+    for (final user in users) {
+      items.add(
+        SyncItem(
+          unified: user.unified,
+          title: user.name,
+          subtitle: user.location,
+          type: SyncItemType.user,
+          originalObject: user,
+        ),
+      );
+    }
+
+    // ------------------------------------------------------------
+    // PAYMENTS
+    // ------------------------------------------------------------
+
+    for (final payment in payments) {
+      items.add(
+        SyncItem(
+          unified: payment.unified,
+          title: 'دفعة',
+          subtitle: _paymentSubtitle(payment),
+          type: SyncItemType.payment,
+          originalObject: payment,
+        ),
+      );
+    }
+
+    // ------------------------------------------------------------
+    // PRODUCTS GROUPED BY INVOICE
+    // ------------------------------------------------------------
+
+    final productsByInvoice = <String, List<FatoraProduct>>{};
+
+    for (final product in products) {
+      productsByInvoice
+          .putIfAbsent(product.fatoraUnified, () => [])
+          .add(product);
+    }
+
+    // ------------------------------------------------------------
+    // INVOICES
+    // ------------------------------------------------------------
+
+    for (final invoice in invoices) {
+      final invoiceProducts = productsByInvoice.remove(invoice.unified) ?? [];
+
+      items.add(
+        SyncItem(
+          unified: invoice.unified,
+          title: 'فاتورة',
+          subtitle: _invoiceSubtitle(invoice),
+          type: SyncItemType.invoice,
+          originalObject: invoice,
+          children: invoiceProducts
+              .map(_productToSyncItem)
+              .toList(growable: false),
+        ),
+      );
+    }
+
+    // ------------------------------------------------------------
+    // PRODUCTS WHOSE INVOICE IS ALREADY SCHEDULED
+    //
+    // This can happen when a new item is added to an existing
+    // invoice after the invoice itself was already scheduled.
+    // ------------------------------------------------------------
+
+    for (final entry in productsByInvoice.entries) {
+      final parentInvoice = invoices.cast<Fatora?>().firstWhere(
+        (invoice) => invoice?.unified == entry.key,
+        orElse: () => null,
+      );
+
+      if (parentInvoice != null) {
+        items.add(
+          SyncItem(
+            unified: parentInvoice.unified,
+            title: 'تعديل فاتورة',
+            subtitle: 'تمت إضافة عناصر جديدة',
+            type: SyncItemType.invoice,
+            originalObject: parentInvoice,
+            children: entry.value
+                .map(_productToSyncItem)
+                .toList(growable: false),
+          ),
+        );
+      } else {
+        // We don't know the parent invoice.
+        // Keep the items visible instead of losing them.
+        items.addAll(entry.value.map(_productToSyncItem));
+      }
+    }
+
+    return items;
+  }
+
+  SyncItem _productToSyncItem(FatoraProduct product) {
+    return SyncItem(
+      unified: product.unified,
+      title: product.productName,
+      subtitle: 'الكمية: ${product.quantity} • الإجمالي: ${product.total}',
+      type: SyncItemType.fatoraProduct,
+      originalObject: product,
+    );
+  }
+
+  String _paymentSubtitle(Payment payment) {
+    return '${payment.amount} ${payment.currency}';
+  }
+
+  String _invoiceSubtitle(Fatora invoice) {
+    final parts = <String>[];
+
+    if (invoice.totalSy != 0) {
+      parts.add('${invoice.totalSy} ل.س');
+    }
+
+    if (invoice.totalDollar != 0) {
+      parts.add('${invoice.totalDollar} \$');
+    }
+
+    return parts.isEmpty ? 'بدون مبلغ' : parts.join(' • ');
+  }
+
+  // ============================================================
+  // SCHEDULE ALL
+  // ============================================================
+
   Future<bool> scheduleAll() async {
-    if (unscheduledItems.isEmpty) return false;
-    isLoading = true;
+    if (_items.isEmpty || _isScheduling) {
+      return false;
+    }
+
+    _isScheduling = true;
+    _error = null;
     notifyListeners();
 
     try {
       final file = await _backupService.exportUnsynced();
-      await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(file.path)],
-          subject:
-              '${DateTime.now().year}/${DateTime.now().month.toString().padLeft(2, '0')}/${DateTime.now().day.toString().padLeft(2, '0')}_بيانات الجدولة_${unscheduledItems.length} عناصر',
-        ),
+
+      final result = await SharePlus.instance.share(
+        ShareParams(files: [XFile(file.path)], subject: 'بيانات الجدولة'),
       );
 
+      if (!_shareWasAccepted(result)) {
+        return false;
+      }
+
       await _transactionService.runTransaction((txn) async {
-        for (var item in unscheduledItems) {
+        for (final item in _items) {
           await _updateItemStatusInTxn(item, txn);
-          for (var child in item.children) {
+
+          for (final child in item.children) {
             await _updateItemStatusInTxn(child, txn);
           }
         }
       });
 
       await loadData();
+
       return true;
-    } catch (e) {
-      error = "فشل في جدولة الكل: $e";
-      isLoading = false;
-      notifyListeners();
+    } catch (e, stackTrace) {
+      debugPrint('scheduleAll error: $e');
+      debugPrintStack(stackTrace: stackTrace);
+
+      _error = 'فشل في جدولة البيانات.';
       return false;
+    } finally {
+      _isScheduling = false;
+      notifyListeners();
     }
   }
 
+  // ============================================================
+  // SCHEDULE ONE
+  // ============================================================
+
   Future<bool> scheduleSingle(SyncItem item) async {
+    if (_isScheduling) {
+      return false;
+    }
+
+    _isScheduling = true;
+    _error = null;
+    notifyListeners();
+
     try {
-      List<XFile> filesToShare = [];
+      final files = <XFile>[];
 
-      Future<void> exportAndAttach(SyncItem i) async {
-        final file = await _backupService.exportSingleRecord(
-          type: i.type.name,
-          unified: i.unified,
-        );
-        filesToShare.add(XFile(file.path));
-      }
-
-      await exportAndAttach(item);
-      for (var child in item.children) {
-        await exportAndAttach(child);
-      }
-
-      await SharePlus.instance.share(
-        ShareParams(files: filesToShare, subject: 'تصدير ${item.title}'),
+      final file = await _backupService.exportSingleRecord(
+        type: _exportType(item.type),
+        unified: item.unified,
       );
+
+      files.add(XFile(file.path));
+
+      for (final child in item.children) {
+        final childFile = await _backupService.exportSingleRecord(
+          type: _exportType(child.type),
+          unified: child.unified,
+        );
+
+        files.add(XFile(childFile.path));
+      }
+
+      final result = await SharePlus.instance.share(
+        ShareParams(files: files, subject: 'تصدير ${item.title}'),
+      );
+
+      if (!_shareWasAccepted(result)) {
+        return false;
+      }
 
       await _transactionService.runTransaction((txn) async {
         await _updateItemStatusInTxn(item, txn);
-        for (var child in item.children) {
+
+        for (final child in item.children) {
           await _updateItemStatusInTxn(child, txn);
         }
       });
 
-      unscheduledItems.removeWhere(
-        (element) => element.unified == item.unified,
-      );
+      _items.removeWhere((element) => element.unified == item.unified);
+
       notifyListeners();
+
       return true;
-    } catch (e) {
-      error = "فشل في جدولة العنصر: $e";
+    } catch (e, stackTrace) {
+      debugPrint('scheduleSingle error: $e');
+      debugPrintStack(stackTrace: stackTrace);
+
+      _error = 'فشل في جدولة العنصر.';
       notifyListeners();
+
       return false;
+    } finally {
+      _isScheduling = false;
+      notifyListeners();
     }
   }
 
-  Future<void> _updateItemStatusInTxn(SyncItem item, dynamic txn) async {
+  String _exportType(SyncItemType type) {
+    switch (type) {
+      case SyncItemType.user:
+        return 'user';
+
+      case SyncItemType.invoice:
+        return 'fatora';
+
+      case SyncItemType.payment:
+        return 'payment';
+
+      case SyncItemType.fatoraProduct:
+        return 'fatoraProduct';
+    }
+  }
+
+  bool _shareWasAccepted(ShareResult result) {
+    // ShareResultStatus.dismissed means the user closed/cancelled
+    // the share sheet.
+    return result.status != ShareResultStatus.dismissed;
+  }
+
+  // ============================================================
+  // UPDATE STATUS
+  // ============================================================
+
+  Future<void> _updateItemStatusInTxn(SyncItem item, Transaction txn) async {
+    print(item.type);
+    print((item.originalObject as User).status);
     switch (item.type) {
       case SyncItemType.user:
-        final obj = (item.originalObject as User).copyWith(
-          status: Status.scheduled,
-        );
-        await UserDB().update(obj, txn);
+        final user = item.originalObject as User;
+
+        await _userService.markScheduled(user, txn);
+
         break;
+
       case SyncItemType.invoice:
-        final obj = (item.originalObject as Fatora).copyWith(
-          status: Status.scheduled,
-        );
-        await FatoraDB().update(obj, txn);
+        final invoice = item.originalObject as Fatora;
+
+        await _invoiceService.markScheduled(invoice, txn);
+
         break;
+
       case SyncItemType.payment:
-        final obj = (item.originalObject as Payment).copyWith(
-          status: Status.scheduled,
-        );
-        await PaymentDB().update(obj, txn);
+        final payment = item.originalObject as Payment;
+
+        await _paymentService.markScheduled(payment, txn);
+
         break;
+
       case SyncItemType.fatoraProduct:
-        final obj = (item.originalObject as FatoraProduct).copyWith(
-          status: Status.scheduled,
+        await _invoiceService.markProductScheduled(
+          item.originalObject as FatoraProduct,
+          txn,
         );
-        await FatoraProductsDB().update(obj, txn);
+
         break;
     }
+  }
+
+  void clearError() {
+    if (_error == null) return;
+
+    _error = null;
+    notifyListeners();
   }
 }

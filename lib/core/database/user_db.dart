@@ -10,11 +10,7 @@ class UserDB {
   Future<int> insert(User user, Transaction txn) async {
     final database = txn;
     final now = DateTime.now().millisecondsSinceEpoch;
-    return await database.insert("users", {
-      ...user.toMap(),
-      "status": Status.notScheduled.value,
-      "updatedAt": now,
-    });
+    return await database.insert("users", {...user.toMap(), "updatedAt": now});
   }
 
   Future<List<User>> getAll(Transaction txn) async {

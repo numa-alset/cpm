@@ -55,10 +55,10 @@ CREATE TABLE users(
 );
 """);
 
-   //
-   // FATORAS (Invoices)
-   //
-   await db.execute("""
+    //
+    // FATORAS (Invoices)
+    //
+    await db.execute("""
 CREATE TABLE fatoras(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
  
@@ -89,10 +89,10 @@ ON DELETE RESTRICT
 );
 """);
 
-   //
-   // FATORA ITEMS
-   //
-   await db.execute("""
+    //
+    // FATORA ITEMS
+    //
+    await db.execute("""
 CREATE TABLE fatora_items(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
  
@@ -184,8 +184,17 @@ ON DELETE RESTRICT
   }
 
   Future<void> close() async {
-    final db = await database;
-    db.close();
+    final db = _database;
+
+    if (db != null) {
+      await db.close();
+      _database = null;
+    }
+  }
+
+  Future<String> get databasePath async {
+    final dbPath = await getDatabasesPath();
+    return join(dbPath, databaseName);
   }
 
   Future<void> deleteDatabaseFile() async {

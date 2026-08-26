@@ -1,5 +1,6 @@
 import 'package:naji/core/models/enum_status.dart';
 import 'package:naji/core/services/transaction_service.dart';
+import 'package:sqflite/sqflite.dart';
 
 import '../models/payment.dart';
 import '../repositories/payment_repository.dart';
@@ -18,7 +19,10 @@ class PaymentService {
 
   Future<void> createPayment(Payment payment) async {
     await _transactionService.runTransaction((txn) async {
-      await _paymentRepository.create(payment, txn);
+      await _paymentRepository.create(
+        payment.copyWith(status: Status.notScheduled),
+        txn,
+      );
       await _userRepository.changeBalance(
         payment.userUnified,
         -payment.amount,
@@ -36,7 +40,10 @@ class PaymentService {
       if (DateTime.fromMillisecondsSinceEpoch(
         int.parse(payment.updatedAt.toString()),
       ).isAfter(DateTime.fromMillisecondsSinceEpoch(old.updatedAt))) {
-        await _paymentRepository.update(payment, txn);
+        await _paymentRepository.update(
+          payment.copyWith(status: Status.notScheduled),
+          txn,
+        );
       }
     });
   }
@@ -79,5 +86,12 @@ class PaymentService {
     return await _transactionService.runTransaction((txn) async {
       return await _paymentRepository.getNotScheduled(txn);
     });
+  }
+
+  Future<int> markScheduled(Payment payment, Transaction txn) async {
+    return await _paymentRepository.update(
+      payment.copyWith(status: Status.scheduled),
+      txn,
+    );
   }
 }

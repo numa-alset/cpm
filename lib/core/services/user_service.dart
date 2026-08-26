@@ -2,6 +2,7 @@ import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/models/enum_status.dart';
 import 'package:naji/core/services/device_service.dart';
 import 'package:naji/core/services/id_service.dart';
+import 'package:sqflite/sqflite.dart';
 
 import '../models/user.dart';
 import '../repositories/user_repository.dart';
@@ -27,6 +28,7 @@ class UserService {
       user = user.copyWith(
         unified: generateUUID(),
         deviceId: DeviceService.deviceIdKey,
+        status: Status.notScheduled,
         createdAt: DateTime.now().millisecondsSinceEpoch,
         updatedAt: DateTime.now().millisecondsSinceEpoch,
       );
@@ -46,7 +48,10 @@ class UserService {
           throw Exception("User name already exists");
         }
       }
-      user = user.copyWith(updatedAt: DateTime.now().millisecondsSinceEpoch);
+      user = user.copyWith(
+        updatedAt: DateTime.now().millisecondsSinceEpoch,
+        status: Status.notScheduled,
+      );
       await _userRepository.update(user, txn);
     });
   }
@@ -74,7 +79,15 @@ class UserService {
     Currency currency,
   ) async {
     await _transactionService.runTransaction((txn) async {
+      final user = await getUser(unified);
+      if (user == null) {
+        throw Exception("User not found");
+      }
       await _userRepository.changeBalance(unified, total, currency, txn);
+      await _userRepository.update(
+        user.copyWith(status: Status.notScheduled),
+        txn,
+      );
     });
   }
 
@@ -112,6 +125,13 @@ class UserService {
     return await _transactionService.runTransaction((txn) async {
       return await _userRepository.getNotScheduled(txn);
     });
+  }
+
+  Future<int> markScheduled(User user, Transaction txn) async {
+    return await _userRepository.update(
+      user.copyWith(status: Status.scheduled),
+      txn,
+    );
   }
 
   String generateUUID() {

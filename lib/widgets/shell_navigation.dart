@@ -46,8 +46,8 @@ class _ShellNavigationState extends State<ShellNavigation> {
         return 'سجل المدفوعات';
       case 2:
         return 'المستخدمين';
-      case 3:
-        return 'إدارة المنتجات';
+      // case 3:
+      //   return 'إدارة المنتجات';
       default:
         return 'الجدولة';
     }
@@ -129,18 +129,6 @@ class AppDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.shopping_cart_outlined),
-            title: const Text('إدارة المنتجات'),
-            selected: navigationShell.currentIndex == 3,
-            onTap: () {
-              Navigator.pop(context);
-              navigationShell.goBranch(
-                3,
-                initialLocation: navigationShell.currentIndex == 3,
-              );
-            },
-          ),
-          ListTile(
             leading: const Icon(Icons.stacked_bar_chart),
             title: const Text('الاحصائيات'),
             onTap: () {
@@ -181,10 +169,10 @@ class BottomNavigationWidget extends StatelessWidget {
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'الجدولة'),
         BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'الدفعات'),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'المستخدمين'),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.shopping_cart_outlined),
-          label: 'المنتجات',
-        ),
+        // BottomNavigationBarItem(
+        //   icon: Icon(Icons.shopping_cart_outlined),
+        //   label: 'المنتجات',
+        // ),
       ],
       onTap: onTap,
     );

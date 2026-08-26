@@ -2,182 +2,453 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive_io.dart';
+import 'package:naji/core/database/database_helper.dart';
+import 'package:naji/core/database/fatora_db.dart';
+import 'package:naji/core/database/payment_db.dart';
+import 'package:naji/core/database/products_fatoras_db.dart';
+import 'package:naji/core/database/user_db.dart';
+import 'package:naji/core/models/fatora.dart';
+import 'package:naji/core/models/fatora_product.dart';
+import 'package:naji/core/models/payment.dart';
+import 'package:naji/core/models/user.dart';
 import 'package:naji/core/services/transaction_service.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
-import '../database/database_helper.dart';
-import '../database/fatora_db.dart';
-import '../database/payment_db.dart';
-import '../database/products_fatoras_db.dart';
-import '../database/user_db.dart';
-import '../models/fatora.dart';
-import '../models/fatora_product.dart';
-import '../models/payment.dart';
-import '../models/user.dart';
-
 class ImportService {
+  static const String backupFormat = 'naji_backup';
+
+  static const int supportedBackupVersion = 1;
+
   final UserDB _userDB = UserDB();
-  // final ProductDB _productDB = ProductDB();
   final FatoraDB _fatoraDB = FatoraDB();
   final PaymentDB _paymentDB = PaymentDB();
   final FatoraProductsDB _fatoraProductsDB = FatoraProductsDB();
+
   final TransactionService _transactionService = TransactionService();
 
-  /// Import a JSON backup file and SMART merge records.
-  Future<Map<String, int>> importJson(File file) async {
+  //
+  // ------------------------------------------------------------
+  // IMPORT JSON
+  // ------------------------------------------------------------
+  //
+
+  Future<ImportResult> importJson(File file) async {
+    if (!await file.exists()) {
+      throw FileSystemException('Backup file does not exist.', file.path);
+    }
+
     final content = await file.readAsString();
-    final Map<String, dynamic> data =
-        json.decode(content) as Map<String, dynamic>;
 
-    return await _transactionService.runTransaction((txn) async {
-      var usersCount = 0;
-      var productsCount = 0;
-      var fatorasCount = 0;
-      var paymentsCount = 0;
-      var fatoraProductsCount = 0;
+    final decoded = json.decode(content);
 
-      // 1. USERS
-      final users = (data['users'] ?? []) as List<dynamic>;
-      for (final u in users) {
-        try {
-          final user = User.fromJson(Map<String, dynamic>.from(u as Map));
-          final existing = await _userDB.get(user.unified, txn);
+    if (decoded is! Map) {
+      throw const FormatException('Invalid backup format.');
+    }
 
-          if (existing == null) {
-            await _userDB.insert(user, txn);
-            usersCount++;
-          } else if (user.updatedAt > existing.updatedAt) {
-            // <-- SMART CHECK
-            await _userDB.update(user, txn);
-            usersCount++;
-          }
-        } catch (_) {}
-      }
+    final data = Map<String, dynamic>.from(decoded);
 
-      // // 2. PRODUCTS
-      // final products = (data['products'] ?? []) as List<dynamic>;
-      // for (final p in products) {
-      //   try {
-      //     final product = Product.fromJson(Map<String, dynamic>.from(p as Map));
-      //     final existing = await _productDB.get(product.unified, txn);
+    _validateBackup(data);
+
+    //
+    // Parse everything BEFORE starting the DB transaction.
+    //
+    // This means malformed records don't result in a partially
+    // modified database.
+    //
+    final parsedUsers = _parseUsers(data['users']);
+    final parsedFatoras = _parseFatoras(data['fatoras']);
+    final parsedPayments = _parsePayments(data['payments']);
+    final parsedFatoraProducts = _parseFatoraProducts(data['fatoraProducts']);
+
+    //
+    // Actual merge.
+    //
+    final result = await _transactionService.runTransaction((txn) async {
+      var users = 0;
+      var fatoras = 0;
+      var payments = 0;
+      var fatoraProducts = 0;
+
       //
-      //     if (existing == null) {
-      //       await _productDB.insert(product, txn);
-      //       productsCount++;
-      //     } else if (product.updatedAt > existing.updatedAt) {
-      //       // <-- SMART CHECK
-      //       await _productDB.update(product, txn);
-      //       productsCount++;
-      //     }
-      //   } catch (_) {}
-      // }
+      // USERS
+      //
+      for (final user in parsedUsers) {
+        final existing = await _userDB.get(user.unified, txn);
 
-      // 3. FATORAS
-      final fatoras = (data['fatoras'] ?? []) as List<dynamic>;
-      for (final f in fatoras) {
-        try {
-          final item = Fatora.fromJson(Map<String, dynamic>.from(f as Map));
-          final existing = await _fatoraDB.get(item.unified, txn);
-
-          if (existing == null) {
-            await _fatoraDB.insert(item, txn);
-            fatorasCount++;
-          } else if (item.updatedAt > existing.updatedAt) {
-            // <-- SMART CHECK
-            await _fatoraDB.update(item, txn);
-            fatorasCount++;
-          }
-        } catch (_) {}
+        if (existing == null) {
+          await _userDB.insert(user, txn);
+          users++;
+        } else if (user.updatedAt > existing.updatedAt) {
+          await _userDB.update(user, txn);
+          users++;
+        }
       }
 
-      // 4. PAYMENTS
-      final payments = (data['payments'] ?? []) as List<dynamic>;
-      for (final p in payments) {
-        try {
-          final item = Payment.fromJson(Map<String, dynamic>.from(p as Map));
-          final existing = await _paymentDB.get(item.unified, txn);
+      //
+      // FATORAS
+      //
+      for (final fatora in parsedFatoras) {
+        final existing = await _fatoraDB.get(fatora.unified, txn);
 
-          if (existing == null) {
-            await _paymentDB.insert(item, txn);
-            paymentsCount++;
-          } else if (item.updatedAt > existing.updatedAt) {
-            // <-- SMART CHECK
-            await _paymentDB.update(item, txn);
-            paymentsCount++;
-          }
-        } catch (_) {}
+        if (existing == null) {
+          await _fatoraDB.insert(fatora, txn);
+          fatoras++;
+        } else if (fatora.updatedAt > existing.updatedAt) {
+          await _fatoraDB.update(fatora, txn);
+          fatoras++;
+        }
       }
 
-      // 5. FATORA PRODUCTS
-      final fp = (data['fatoraProducts'] ?? []) as List<dynamic>;
-      for (final p in fp) {
-        try {
-          final item = FatoraProduct.fromJson(
-            Map<String, dynamic>.from(p as Map),
-          );
-          final existing = await _fatoraProductsDB.get(item.unified, txn);
+      //
+      // PAYMENTS
+      //
+      for (final payment in parsedPayments) {
+        final existing = await _paymentDB.get(payment.unified, txn);
 
-          if (existing == null) {
-            await _fatoraProductsDB.insert(item, txn);
-            fatoraProductsCount++;
-          } else if (item.updatedAt > existing.updatedAt) {
-            // <-- SMART CHECK
-            await _fatoraProductsDB.update(item, txn);
-            fatoraProductsCount++;
-          }
-        } catch (_) {}
+        if (existing == null) {
+          await _paymentDB.insert(payment, txn);
+          payments++;
+        } else if (payment.updatedAt > existing.updatedAt) {
+          await _paymentDB.update(payment, txn);
+          payments++;
+        }
       }
 
-      return {
-        'users': usersCount,
-        'products': productsCount,
-        'fatoras': fatorasCount,
-        'payments': paymentsCount,
-        'fatoraProducts': fatoraProductsCount,
-      };
+      //
+      // FATORA PRODUCTS
+      //
+      for (final item in parsedFatoraProducts) {
+        final existing = await _fatoraProductsDB.get(item.unified, txn);
+
+        if (existing == null) {
+          await _fatoraProductsDB.insert(item, txn);
+          fatoraProducts++;
+        } else if (item.updatedAt > existing.updatedAt) {
+          await _fatoraProductsDB.update(item, txn);
+          fatoraProducts++;
+        }
+      }
+
+      return ImportResult(
+        users: users,
+        fatoras: fatoras,
+        payments: payments,
+        fatoraProducts: fatoraProducts,
+      );
     });
+
+    return result;
   }
 
-  /// Import first JSON file inside a ZIP archive.
-  Future<Map<String, int>> importZip(File zipFile) async {
+  //
+  // ------------------------------------------------------------
+  // IMPORT ZIP
+  // ------------------------------------------------------------
+  //
+
+  Future<ImportResult> importZip(File zipFile) async {
+    if (!await zipFile.exists()) {
+      throw FileSystemException('ZIP backup does not exist.', zipFile.path);
+    }
+
     final bytes = await zipFile.readAsBytes();
-    final archive = ZipDecoder().decodeBytes(bytes);
 
-    for (final file in archive) {
-      if (file.isFile && file.name.toLowerCase().endsWith('.json')) {
-        final tmpDir = await getTemporaryDirectory();
-        final outPath = join(tmpDir.path, file.name);
-        final outFile = File(outPath);
-        await outFile.create(recursive: true);
-        await outFile.writeAsBytes(file.content as List<int>);
+    final Archive archive;
 
-        final result = await importJson(outFile);
+    try {
+      archive = ZipDecoder().decodeBytes(bytes);
+    } catch (e) {
+      throw FormatException('Invalid ZIP backup: $e');
+    }
 
-        await outFile.delete().catchError((_) {});
-        return result;
+    ArchiveFile? jsonEntry;
+
+    for (final entry in archive) {
+      if (!entry.isFile) {
+        continue;
+      }
+
+      final name = basename(entry.name).toLowerCase();
+
+      if (name.endsWith('.json')) {
+        jsonEntry = entry;
+        break;
       }
     }
 
-    return {
-      'users': 0,
-      'products': 0,
-      'fatoras': 0,
-      'payments': 0,
-      'fatoraProducts': 0,
-    };
+    if (jsonEntry == null) {
+      throw const FormatException(
+        'No JSON backup was found inside the ZIP file.',
+      );
+    }
+
+    final tmpDir = await getTemporaryDirectory();
+
+    //
+    // Never use the ZIP filename directly as a path.
+    //
+    final outFile = File(
+      join(
+        tmpDir.path,
+        'naji_import_${DateTime.now().millisecondsSinceEpoch}.json',
+      ),
+    );
+
+    try {
+      await outFile.writeAsBytes(jsonEntry.content as List<int>, flush: true);
+
+      return await importJson(outFile);
+    } finally {
+      try {
+        if (await outFile.exists()) {
+          await outFile.delete();
+        }
+      } catch (_) {
+        // Ignore cleanup errors.
+      }
+    }
   }
 
-  /// Replace the app database file with the provided sqlite file.
+  //
+  // ------------------------------------------------------------
+  // IMPORT SQLITE DATABASE
+  // ------------------------------------------------------------
+  //
+
   Future<void> importDatabase(File sourceDbFile) async {
+    if (!await sourceDbFile.exists()) {
+      throw FileSystemException(
+        'Database backup does not exist.',
+        sourceDbFile.path,
+      );
+    }
+
+    //
+    // Validate that the source is actually a SQLite database
+    // containing the expected users table.
+    //
+    await _validateDatabaseFile(sourceDbFile);
+
+    //
+    // Close the current database and reset DatabaseHelper cache.
+    //
     await DatabaseHelper.instance.close();
+
     final dbPath = await getDatabasesPath();
+
     final destination = File(join(dbPath, DatabaseHelper.databaseName));
 
-    if (await destination.exists()) {
-      await destination.delete();
+    //
+    // Keep the old DB until the new file has been copied.
+    //
+    final tempDestination = File(
+      join(dbPath, '${DatabaseHelper.databaseName}.importing'),
+    );
+
+    if (await tempDestination.exists()) {
+      await tempDestination.delete();
     }
-    await sourceDbFile.copy(destination.path);
+
+    try {
+      await sourceDbFile.copy(tempDestination.path);
+
+      if (await destination.exists()) {
+        await destination.delete();
+      }
+
+      await tempDestination.rename(destination.path);
+    } catch (_) {
+      try {
+        if (await tempDestination.exists()) {
+          await tempDestination.delete();
+        }
+      } catch (_) {}
+
+      rethrow;
+    }
+  }
+
+  //
+  // ------------------------------------------------------------
+  // VALIDATE BACKUP
+  // ------------------------------------------------------------
+  //
+
+  void _validateBackup(Map<String, dynamic> data) {
+    if (data['format'] != backupFormat) {
+      throw const FormatException('This file is not a Naji backup.');
+    }
+
+    final version = data['version'];
+
+    if (version is! num) {
+      throw const FormatException('Backup version is missing.');
+    }
+
+    if (version.toInt() > supportedBackupVersion) {
+      throw UnsupportedError(
+        'This backup was created by a newer version of Naji. '
+        'Backup version: ${version.toInt()}, '
+        'supported: $supportedBackupVersion.',
+      );
+    }
+
+    _validateListField(data, 'users');
+    _validateListField(data, 'fatoras');
+    _validateListField(data, 'payments');
+    _validateListField(data, 'fatoraProducts');
+  }
+
+  void _validateListField(Map<String, dynamic> data, String field) {
+    final value = data[field];
+
+    if (value == null) {
+      throw FormatException('Backup field "$field" is missing.');
+    }
+
+    if (value is! List) {
+      throw FormatException('Backup field "$field" must be a list.');
+    }
+  }
+
+  //
+  // ------------------------------------------------------------
+  // PARSING
+  // ------------------------------------------------------------
+  //
+
+  List<User> _parseUsers(dynamic value) {
+    return _parseList(value, 'users', (map) => User.fromJson(map));
+  }
+
+  List<Fatora> _parseFatoras(dynamic value) {
+    return _parseList(value, 'fatoras', (map) => Fatora.fromJson(map));
+  }
+
+  List<Payment> _parsePayments(dynamic value) {
+    return _parseList(value, 'payments', (map) => Payment.fromJson(map));
+  }
+
+  List<FatoraProduct> _parseFatoraProducts(dynamic value) {
+    return _parseList(
+      value,
+      'fatoraProducts',
+      (map) => FatoraProduct.fromJson(map),
+    );
+  }
+
+  List<T> _parseList<T>(
+    dynamic value,
+    String field,
+    T Function(Map<String, dynamic>) parser,
+  ) {
+    if (value is! List) {
+      throw FormatException('"$field" must be a list.');
+    }
+
+    final result = <T>[];
+
+    for (var i = 0; i < value.length; i++) {
+      final item = value[i];
+
+      if (item is! Map) {
+        throw FormatException('Invalid "$field" record at index $i.');
+      }
+
+      try {
+        result.add(parser(Map<String, dynamic>.from(item)));
+      } catch (e) {
+        throw FormatException('Invalid "$field" record at index $i: $e');
+      }
+    }
+
+    return result;
+  }
+
+  //
+  // ------------------------------------------------------------
+  // SQLITE VALIDATION
+  // ------------------------------------------------------------
+  //
+
+  Future<void> _validateDatabaseFile(File file) async {
+    Database? db;
+
+    try {
+      db = await openDatabase(file.path, readOnly: true);
+
+      final result = await db.rawQuery(
+        "SELECT name FROM sqlite_master "
+        "WHERE type = 'table' AND name = 'users'",
+      );
+
+      if (result.isEmpty) {
+        throw const FormatException(
+          'The database does not contain the expected Naji schema.',
+        );
+      }
+
+      final usersColumns = await db.rawQuery('PRAGMA table_info(users)');
+
+      final hasUnified = usersColumns.any((row) => row['name'] == 'unified');
+
+      final hasUpdatedAt = usersColumns.any(
+        (row) => row['name'] == 'updatedAt',
+      );
+
+      if (!hasUnified || !hasUpdatedAt) {
+        throw const FormatException(
+          'The database schema is not compatible with Naji.',
+        );
+      }
+    } catch (e) {
+      if (e is FormatException) {
+        rethrow;
+      }
+
+      throw FormatException('Invalid SQLite database: $e');
+    } finally {
+      await db?.close();
+    }
+  }
+}
+
+class ImportResult {
+  final int users;
+  final int fatoras;
+  final int payments;
+  final int fatoraProducts;
+
+  const ImportResult({
+    this.users = 0,
+    this.fatoras = 0,
+    this.payments = 0,
+    this.fatoraProducts = 0,
+  });
+
+  int get total => users + fatoras + payments + fatoraProducts;
+
+  bool get hasChanges => total > 0;
+
+  @override
+  String toString() {
+    return 'ImportResult('
+        'users: $users, '
+        'fatoras: $fatoras, '
+        'payments: $payments, '
+        'fatoraProducts: $fatoraProducts'
+        ')';
+  }
+
+  Map<String, int> toMap() {
+    return {
+      'users': users,
+      'fatoras': fatoras,
+      'payments': payments,
+      'fatoraProducts': fatoraProducts,
+      'total': total,
+    };
   }
 }

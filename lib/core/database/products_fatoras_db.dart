@@ -1,6 +1,5 @@
 import 'package:sqflite/sqflite.dart';
 
-import '../models/enum_status.dart';
 import '../models/fatora_product.dart';
 import 'database_helper.dart';
 
@@ -10,11 +9,7 @@ class FatoraProductsDB {
   Future<int> insert(FatoraProduct item, Transaction txn) async {
     final database = txn;
     final now = DateTime.now().millisecondsSinceEpoch;
-    return database.insert("fatora_items", {
-      ...item.toMap(),
-      "status": Status.notScheduled.value,
-      "updatedAt": now,
-    });
+    return database.insert("fatora_items", {...item.toMap(), "updatedAt": now});
   }
 
   Future<List<FatoraProduct>> getByFatora(
@@ -37,11 +32,7 @@ class FatoraProductsDB {
 
     return database.update(
       "fatora_items",
-      {
-        ...item.toMap(),
-        "status": Status.notScheduled.value,
-        "updatedAt": DateTime.now().millisecondsSinceEpoch,
-      },
+      {...item.toMap(), "updatedAt": DateTime.now().millisecondsSinceEpoch},
       where: "unified=?",
       whereArgs: [item.unified],
     );
@@ -53,7 +44,7 @@ class FatoraProductsDB {
 
     return database.update(
       "fatora_items",
-      {"deletedAt": now, "updatedAt": now, "status": Status.notScheduled.value},
+      {"deletedAt": now, "updatedAt": now},
       where: "unified=?",
       whereArgs: [unified],
     );

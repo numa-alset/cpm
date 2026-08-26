@@ -26,6 +26,8 @@ import 'package:naji/core/services/sync_service.dart';
 import 'package:naji/core/services/transaction_service.dart';
 import 'package:naji/core/services/user_service.dart';
 import 'package:naji/core/services/validation_service.dart';
+import 'package:naji/feat/data_management/controller/data_management_controller.dart';
+import 'package:naji/feat/home/controller/home_controller.dart';
 import 'package:naji/feat/users/controllers/users_controller.dart';
 
 final getIt = GetIt.instance;
@@ -106,5 +108,17 @@ Future<void> setupLocator() async {
   // Controllers
   getIt.registerFactory<UsersController>(
     () => UsersController(getIt<UserService>()),
+  );
+  getIt.registerFactory<DataManagementController>(
+    () => DataManagementController(),
+  );
+  getIt.registerFactory<HomeController>(
+    () => HomeController(
+      userService: getIt<UserService>(),
+      invoiceService: getIt<InvoiceService>(),
+      paymentService: getIt<PaymentService>(),
+      backupService: getIt<BackupService>(),
+      transactionService: getIt<TransactionService>(),
+    ),
   );
 }

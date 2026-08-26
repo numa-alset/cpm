@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/models/payment.dart';
 import 'package:naji/core/services/payment_service.dart';
 import 'package:naji/core/services/user_service.dart';
 import 'package:naji/feat/payments/controller/payment_controller.dart';
+import 'package:naji/feat/payments/widgets/add_payment_sheet.dart';
+import 'package:naji/feat/payments/widgets/payment_group.dart';
 import 'package:provider/provider.dart';
 
 class PaymentsScreen extends StatelessWidget {
@@ -25,379 +26,435 @@ class PaymentsScreen extends StatelessWidget {
 class _PaymentsView extends StatelessWidget {
   const _PaymentsView();
 
-  String _formatExactDate(int milliseconds) {
-    final date = DateTime.fromMillisecondsSinceEpoch(milliseconds);
-    return "${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}";
+  @override
+  Widget build(BuildContext context) {
+    final controller = context.watch<PaymentsController>();
+    final colors = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      backgroundColor: colors.surfaceContainerLowest,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddPaymentSheet(context, controller),
+        icon: const Icon(Icons.add_card_rounded),
+        label: const Text("إضافة دفعة"),
+      ),
+
+      body: Column(
+        children: [
+          _buildFilterBar(context, controller),
+
+          Expanded(child: _buildContent(context, controller)),
+        ],
+      ),
+    );
   }
 
-  Future<bool> _confirmDelete(BuildContext context) async {
-    return await showDialog<bool>(
-          context: context,
-          builder: (dialogContext) => AlertDialog(
-            title: const Text("حذف الدفعة"),
-            content: const Text(
-              "هل أنت متأكد أنك تريد حذف هذه الدفعة؟ سيتم استرجاع المبلغ لرصيد العميل.",
+  // ===========================================================================
+  // FILTER BAR
+  // ===========================================================================
+
+  Widget _buildFilterBar(BuildContext context, PaymentsController controller) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+      child: Row(
+        children: [
+          // ============================================================
+          // FILTERS
+          // ============================================================
+          Expanded(
+            child: Container(
+              height: 46,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: colors.surfaceContainer,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _FilterItem(
+                      label: "يومي",
+                      icon: Icons.today_outlined,
+                      selected: controller.currentFilter == GroupingFilter.day,
+                      onTap: () => controller.changeFilter(GroupingFilter.day),
+                    ),
+                  ),
+
+                  Expanded(
+                    child: _FilterItem(
+                      label: "شهري",
+                      icon: Icons.calendar_month_outlined,
+                      selected:
+                          controller.currentFilter == GroupingFilter.month,
+                      onTap: () =>
+                          controller.changeFilter(GroupingFilter.month),
+                    ),
+                  ),
+
+                  Expanded(
+                    child: _FilterItem(
+                      label: "سنوي",
+                      icon: Icons.calendar_today_outlined,
+                      selected: controller.currentFilter == GroupingFilter.year,
+                      onTap: () => controller.changeFilter(GroupingFilter.year),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext, false),
-                child: const Text("إلغاء"),
-              ),
-              FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: Colors.red),
-                onPressed: () => Navigator.pop(dialogContext, true),
-                child: const Text("حذف"),
-              ),
-            ],
           ),
-        ) ??
-        false;
-  }
 
-  void _showAddPaymentDialog(BuildContext context) {
-    final controller = context.read<PaymentsController>();
+          // ============================================================
+          // GROUP ACTIONS
+          // ============================================================
+          if (controller.groups.isNotEmpty) ...[
+            const SizedBox(width: 8),
 
-    String? selectedUserUnified;
-    Currency selectedCurrency = Currency.sy; // القيمة الافتراضية للعملة
-    final amountController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text("إضافة دفعة جديدة"),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Dropdown to select User
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: "العميل",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person_outline),
-                ),
-                initialValue: selectedUserUnified,
-                hint: const Text("اختر العميل"),
-                items: controller.users.map((user) {
-                  return DropdownMenuItem(
-                    value: user.unified,
-                    child: Text(user.name),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  selectedUserUnified = val;
-                },
-                validator: (val) => val == null ? "الرجاء اختيار عميل" : null,
+            Container(
+              height: 46,
+              decoration: BoxDecoration(
+                color: colors.surfaceContainer,
+                borderRadius: BorderRadius.circular(14),
               ),
-              const SizedBox(height: 16),
-
-              // Dropdown to select Currency
-              DropdownButtonFormField<Currency>(
-                decoration: const InputDecoration(
-                  labelText: "العملة",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.account_balance_wallet_outlined),
+              child: PopupMenuButton<_GroupAction>(
+                tooltip: "المجموعات",
+                padding: EdgeInsets.zero,
+                icon: const Icon(Icons.more_vert_rounded),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                value: selectedCurrency,
-                items: Currency.values.map((currency) {
-                  return DropdownMenuItem(
-                    value: currency,
-                    child: Text(currency.name),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) {
-                    selectedCurrency = val;
+                onSelected: (action) {
+                  switch (action) {
+                    case _GroupAction.expandAll:
+                      controller.expandAll();
+                      break;
+
+                    case _GroupAction.collapseAll:
+                      controller.collapseAll();
+                      break;
                   }
                 },
-              ),
-              const SizedBox(height: 16),
-
-              // TextField for Amount
-              TextFormField(
-                controller: amountController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: const InputDecoration(
-                  labelText: "المبلغ",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.attach_money),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) return "مطلوب";
-                  final parsed = double.tryParse(value);
-                  if (parsed == null || parsed <= 0) return "مبلغ غير صالح";
-                  return null;
-                },
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text("إلغاء"),
-          ),
-          FilledButton(
-            onPressed: () async {
-              if (formKey.currentState!.validate()) {
-                // تمرير العملة المختارة مع العملية
-                final success = await context
-                    .read<PaymentsController>()
-                    .addPayment(
-                      userUnified: selectedUserUnified!,
-                      amount: double.parse(amountController.text.trim()),
-                      currency: selectedCurrency,
-                    );
-
-                if (success && dialogContext.mounted) {
-                  Navigator.pop(dialogContext);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("تمت إضافة الدفعة بنجاح"),
-                      backgroundColor: Colors.green,
+                itemBuilder: (_) => const [
+                  PopupMenuItem(
+                    value: _GroupAction.expandAll,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.unfold_more_rounded),
+                      title: Text("توسيع الكل"),
                     ),
-                  );
-                }
-              }
+                  ),
+
+                  PopupMenuItem(
+                    value: _GroupAction.collapseAll,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.unfold_less_rounded),
+                      title: Text("طي الكل"),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // CONTENT
+  // ===========================================================================
+
+  Widget _buildContent(BuildContext context, PaymentsController controller) {
+    if (controller.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (controller.error != null) {
+      return _buildErrorState(context, controller);
+    }
+
+    if (controller.groups.isEmpty) {
+      return _buildEmptyState(context, controller);
+    }
+
+    return RefreshIndicator(
+      onRefresh: controller.loadData,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 110),
+        itemCount: controller.groups.length,
+        itemBuilder: (context, index) {
+          final group = controller.groups[index];
+
+          return PaymentGroupWidget(
+            group: group,
+            collapsed: controller.isGroupCollapsed(group.key),
+            userName: controller.getUserName,
+            onToggle: () {
+              controller.toggleGroup(group.key);
             },
-            child: const Text("حفظ الدفعة"),
+            onDelete: (payment) => _deletePayment(context, controller, payment),
+          );
+        },
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // ERROR
+  // ===========================================================================
+
+  Widget _buildErrorState(BuildContext context, PaymentsController controller) {
+    final colors = Theme.of(context).colorScheme;
+
+    return RefreshIndicator(
+      onRefresh: controller.loadData,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: 420,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: colors.errorContainer,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.error_outline_rounded,
+                        size: 40,
+                        color: colors.onErrorContainer,
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    Text(
+                      "حدث خطأ",
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    Text(
+                      controller.error!,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    FilledButton.icon(
+                      onPressed: controller.loadData,
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text("إعادة المحاولة"),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final controller = context.watch<PaymentsController>();
-    final theme = Theme.of(context);
+  // ===========================================================================
+  // EMPTY
+  // ===========================================================================
 
-    return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddPaymentDialog(context),
-        child: const Icon(Icons.add),
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Filter Selector
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: SegmentedButton<GroupingFilter>(
-                  segments: const [
-                    ButtonSegment(
-                      value: GroupingFilter.day,
-                      label: Text("يومياً"),
+  Widget _buildEmptyState(BuildContext context, PaymentsController controller) {
+    final colors = Theme.of(context).colorScheme;
+
+    return RefreshIndicator(
+      onRefresh: controller.loadData,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: 420,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 82,
+                    height: 82,
+                    decoration: BoxDecoration(
+                      color: colors.surfaceContainer,
+                      shape: BoxShape.circle,
                     ),
-                    ButtonSegment(
-                      value: GroupingFilter.month,
-                      label: Text("شهرياً"),
+                    child: Icon(
+                      Icons.payments_outlined,
+                      size: 40,
+                      color: colors.onSurfaceVariant,
                     ),
-                    ButtonSegment(
-                      value: GroupingFilter.year,
-                      label: Text("سنوياً"),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  Text(
+                    "لا توجد دفعات",
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
-                  ],
-                  selected: {controller.currentFilter},
-                  onSelectionChanged: (set) =>
-                      controller.changeFilter(set.first),
-                ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Text(
+                    "لم يتم تسجيل أي دفعات حتى الآن",
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
 
-            // Main Content wrapped in RefreshIndicator
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: controller.loadData,
-                child: controller.isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : controller.error != null
-                    ? CustomScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        slivers: [
-                          SliverFillRemaining(
-                            hasScrollBody: false,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.error_outline,
-                                  color: Colors.red,
-                                  size: 48,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  controller.error!,
-                                  style: const TextStyle(color: Colors.red),
-                                ),
-                                const SizedBox(height: 16),
-                                ElevatedButton(
-                                  onPressed: controller.loadData,
-                                  child: const Text("إعادة المحاولة"),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      )
-                    : controller.displayItems.isEmpty
-                    ? CustomScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        slivers: [
-                          SliverFillRemaining(
-                            hasScrollBody: false,
-                            child: Center(
-                              child: Text(
-                                "لا توجد مدفوعات مسجلة حتى الآن",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                    : ListView.builder(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        itemCount: controller.displayItems.length,
-                        itemBuilder: (context, index) {
-                          final item = controller.displayItems[index];
+  // ===========================================================================
+  // ADD PAYMENT
+  // ===========================================================================
 
-                          // --- RENDER HEADER ITEM ---
-                          if (item is String) {
-                            final isCollapsed = controller.collapsedGroups
-                                .contains(item);
+  Future<void> _showAddPaymentSheet(
+    BuildContext context,
+    PaymentsController controller,
+  ) async {
+    final success = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => AddPaymentSheet(controller: controller),
+    );
 
-                            return InkWell(
-                              borderRadius: BorderRadius.circular(8),
-                              onTap: () => controller.toggleGroup(item),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                  horizontal: 8,
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      item,
-                                      style: theme.textTheme.titleMedium
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: theme.colorScheme.primary,
-                                          ),
-                                    ),
-                                    Icon(
-                                      isCollapsed
-                                          ? Icons.expand_more
-                                          : Icons.expand_less,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }
+    if (success == true && context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("تمت إضافة الدفعة بنجاح")));
+    }
+  }
 
-                          // --- RENDER PAYMENT ITEM ---
-                          if (item is Payment) {
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: 8),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(color: Colors.grey.shade200),
-                              ),
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                leading: CircleAvatar(
-                                  backgroundColor: Colors.green.shade50,
-                                  child: Icon(
-                                    // تغيير الأيقونة لتلائم نوع العملة
-                                    item.currency == Currency.dollar
-                                        ? Icons.attach_money
-                                        : Icons.money,
-                                    color: Colors.green,
-                                  ),
-                                ),
-                                title: Text(
-                                  // استخدام رمز العملة الديناميكي
-                                  "${item.amount.toStringAsFixed(2)} ${item.currency.symbol}",
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                    color: Colors.green,
-                                  ),
-                                ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      controller.getUserName(item.userUnified),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                    Text(
-                                      "التاريخ: ${_formatExactDate(item.date)}",
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                trailing: IconButton(
-                                  icon: const Icon(
-                                    Icons.delete_outline,
-                                    color: Colors.red,
-                                  ),
-                                  onPressed: () async {
-                                    final confirm = await _confirmDelete(
-                                      context,
-                                    );
-                                    if (confirm && context.mounted) {
-                                      final success = await context
-                                          .read<PaymentsController>()
-                                          .deletePayment(item.unified);
-                                      if (success && context.mounted) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              "تم حذف الدفعة بنجاح",
-                                            ),
-                                            backgroundColor: Colors.green,
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  },
-                                ),
-                              ),
-                            );
-                          }
+  // ===========================================================================
+  // DELETE
+  // ===========================================================================
 
-                          return const SizedBox.shrink();
-                        },
-                      ),
+  Future<void> _deletePayment(
+    BuildContext context,
+    PaymentsController controller,
+    Payment payment,
+  ) async {
+    final confirm =
+        await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) {
+            final colors = Theme.of(dialogContext).colorScheme;
+
+            return AlertDialog(
+              title: const Text("حذف الدفعة"),
+              content: const Text(
+                "هل أنت متأكد من حذف هذه الدفعة؟ سيتم استرجاع المبلغ لرصيد العميل.",
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text("إلغاء"),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colors.error,
+                    foregroundColor: colors.onError,
+                  ),
+                  onPressed: () => Navigator.pop(dialogContext, true),
+                  child: const Text("حذف"),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+
+    if (!confirm || !context.mounted) {
+      return;
+    }
+
+    final success = await controller.deletePayment(payment.unified);
+
+    if (success && context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("تم حذف الدفعة بنجاح")));
+    }
+  }
+}
+
+// ==============================================================================
+// FILTER ITEM
+// ==============================================================================
+
+class _FilterItem extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _FilterItem({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        decoration: BoxDecoration(
+          color: selected ? colors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(11),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 17,
+              color: selected ? colors.onPrimary : colors.onSurfaceVariant,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected ? colors.onPrimary : colors.onSurfaceVariant,
               ),
             ),
           ],
@@ -406,3 +463,5 @@ class _PaymentsView extends StatelessWidget {
     );
   }
 }
+
+enum _GroupAction { expandAll, collapseAll }
