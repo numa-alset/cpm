@@ -37,7 +37,7 @@ final router = GoRouter(
     ),
     GoRoute(
       path: AppRouter.statisticsPath,
-      builder: (context, state) => StatisticsScreen(),
+      builder: (context, state) => StatisticScreen(),
     ),
     GoRoute(
       path: AppRouter.dataManagementPath,

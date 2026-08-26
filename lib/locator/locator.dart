@@ -90,15 +90,7 @@ Future<void> setupLocator() async {
   );
 
   // IdService is static - no need to register an instance
-  getIt.registerLazySingleton(
-    () => StatisticsService(
-      getIt<FatoraRepository>(),
-      getIt<PaymentRepository>(),
-      getIt<UserRepository>(),
-      getIt<FatoraProductRepository>(),
-      getIt<TransactionService>(),
-    ),
-  );
+  getIt.registerLazySingleton(() => StatisticService());
   getIt.registerLazySingleton(() => DeviceService());
   // Utilities
   getIt.registerLazySingleton(() => BackupService());
