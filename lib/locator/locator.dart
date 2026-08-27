@@ -21,6 +21,7 @@ import 'package:naji/core/services/device_service.dart';
 import 'package:naji/core/services/import_service.dart';
 import 'package:naji/core/services/invoice_service.dart';
 import 'package:naji/core/services/payment_service.dart';
+import 'package:naji/core/services/share_import_service.dart';
 import 'package:naji/core/services/statistics_service.dart';
 import 'package:naji/core/services/sync_service.dart';
 import 'package:naji/core/services/transaction_service.dart';
@@ -96,6 +97,9 @@ Future<void> setupLocator() async {
   getIt.registerLazySingleton(() => BackupService());
   getIt.registerLazySingleton(() => ImportService());
   getIt.registerLazySingleton(() => SyncService());
+  getIt.registerLazySingleton<ShareImportService>(
+    () => ShareImportService(importService: getIt<ImportService>()),
+  );
 
   // Controllers
   getIt.registerFactory<UsersController>(

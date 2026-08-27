@@ -28,6 +28,23 @@ class ImportService {
 
   final TransactionService _transactionService = TransactionService();
 
+  // external share
+  Future<ImportResult> importFile(File file) async {
+    final path = file.path.toLowerCase();
+
+    if (path.endsWith('.json')) {
+      return importJson(file);
+    }
+
+    if (path.endsWith('.zip')) {
+      return importZip(file);
+    }
+
+    return ImportResult.failure(
+      'نوع الملف غير مدعوم. استخدم Naji JSON أو ZIP.',
+    );
+  }
+
   //
   // ------------------------------------------------------------
   // IMPORT JSON
@@ -132,6 +149,7 @@ class ImportService {
       }
 
       return ImportResult(
+        success: true,
         users: users,
         fatoras: fatoras,
         payments: payments,
@@ -416,39 +434,34 @@ class ImportService {
 }
 
 class ImportResult {
+  const ImportResult({
+    required this.success,
+    required this.users,
+    required this.fatoras,
+    required this.payments,
+    required this.fatoraProducts,
+    this.message,
+  });
+
+  final bool success;
+
   final int users;
   final int fatoras;
   final int payments;
   final int fatoraProducts;
 
-  const ImportResult({
-    this.users = 0,
-    this.fatoras = 0,
-    this.payments = 0,
-    this.fatoraProducts = 0,
-  });
+  final String? message;
 
   int get total => users + fatoras + payments + fatoraProducts;
 
-  bool get hasChanges => total > 0;
-
-  @override
-  String toString() {
-    return 'ImportResult('
-        'users: $users, '
-        'fatoras: $fatoras, '
-        'payments: $payments, '
-        'fatoraProducts: $fatoraProducts'
-        ')';
-  }
-
-  Map<String, int> toMap() {
-    return {
-      'users': users,
-      'fatoras': fatoras,
-      'payments': payments,
-      'fatoraProducts': fatoraProducts,
-      'total': total,
-    };
+  factory ImportResult.failure(String message) {
+    return ImportResult(
+      success: false,
+      users: 0,
+      fatoras: 0,
+      payments: 0,
+      fatoraProducts: 0,
+      message: message,
+    );
   }
 }
