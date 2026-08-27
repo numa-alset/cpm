@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naji/core/services/share_import_service.dart';
 import 'package:naji/locator/locator.dart';
@@ -48,10 +49,6 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _handleImportProgress(ImportProgress progress) {
-    print('UI: import status = ${progress.status}');
-
-    print('UI: message = ${progress.message}');
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
 
@@ -182,6 +179,13 @@ class _MyAppState extends State<MyApp> {
       textDirection: TextDirection.rtl,
       child: MaterialApp.router(
         title: 'Naji',
+        locale: const Locale('ar'),
+        supportedLocales: const [Locale('ar')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         routeInformationProvider: router.routeInformationProvider,
         routeInformationParser: router.routeInformationParser,
         routerDelegate: router.routerDelegate,
