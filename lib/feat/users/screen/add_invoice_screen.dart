@@ -107,17 +107,26 @@ class _AddInvoiceViewState extends State<_AddInvoiceView> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   // Writer Field
-                  TextFormField(
-                    controller: _writerController,
+                  DropdownButtonFormField<String>(
+                    initialValue: _writerController.text.isEmpty
+                        ? null
+                        : _writerController.text,
                     decoration: InputDecoration(
-                      labelText: "اسم المحرر",
-                      prefixIcon: const Icon(Icons.person),
+                      labelText: "الموزع",
+                      prefixIcon: const Icon(Icons.person_outline),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    validator: (val) {
-                      if (val == null || val.trim().isEmpty) {
+                    items: const [
+                      DropdownMenuItem(value: "رافي", child: Text("رافي")),
+                      DropdownMenuItem(value: "ناجي", child: Text("ناجي")),
+                    ],
+                    onChanged: (value) {
+                      _writerController.text = value ?? '';
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
                         return "مطلوب";
                       }
                       return null;
@@ -167,9 +176,7 @@ class _AddInvoiceViewState extends State<_AddInvoiceView> {
 
                   // Products List
                   if (controller.items.isEmpty)
-                    const Center(
-                      child: Text("لم يتم إضافة منتجات بعد"),
-                    )
+                    const Center(child: Text("لم يتم إضافة منتجات بعد"))
                   else
                     ListView.builder(
                       shrinkWrap: true,
@@ -221,7 +228,9 @@ class _AddInvoiceViewState extends State<_AddInvoiceView> {
                             ),
                             Text(
                               "${controller.totalSy.toStringAsFixed(2)} SYP + ${controller.totalDollar.toStringAsFixed(2)} USD",
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
@@ -274,10 +283,7 @@ class _InvoiceItemWidget extends StatefulWidget {
   final int index;
   final AddInvoiceController controller;
 
-  const _InvoiceItemWidget({
-    required this.index,
-    required this.controller,
-  });
+  const _InvoiceItemWidget({required this.index, required this.controller});
 
   @override
   State<_InvoiceItemWidget> createState() => _InvoiceItemWidgetState();
@@ -371,8 +377,9 @@ class _InvoiceItemWidgetState extends State<_InvoiceItemWidget> {
                   child: TextFormField(
                     controller: _priceController,
                     onChanged: (_) => _updateController(),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     decoration: InputDecoration(
                       labelText: "السعر",
                       border: OutlineInputBorder(
@@ -395,8 +402,9 @@ class _InvoiceItemWidgetState extends State<_InvoiceItemWidget> {
                   child: TextFormField(
                     controller: _quantityController,
                     onChanged: (_) => _updateController(),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     decoration: InputDecoration(
                       labelText: "الكمية",
                       border: OutlineInputBorder(
@@ -417,17 +425,11 @@ class _InvoiceItemWidgetState extends State<_InvoiceItemWidget> {
                 const SizedBox(width: 8),
                 Column(
                   children: [
-                    const Text(
-                      "العملة",
-                      style: TextStyle(fontSize: 12),
-                    ),
+                    const Text("العملة", style: TextStyle(fontSize: 12)),
                     const SizedBox(height: 4),
                     SegmentedButton<Currency>(
                       segments: const [
-                        ButtonSegment(
-                          value: Currency.sy,
-                          label: Text("SYP"),
-                        ),
+                        ButtonSegment(value: Currency.sy, label: Text("SYP")),
                         ButtonSegment(
                           value: Currency.dollar,
                           label: Text("USD"),
@@ -468,10 +470,7 @@ class _SummaryRow extends StatelessWidget {
   final String label;
   final double value;
 
-  const _SummaryRow({
-    required this.label,
-    required this.value,
-  });
+  const _SummaryRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -479,10 +478,7 @@ class _SummaryRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label),
-          Text(value.toStringAsFixed(2)),
-        ],
+        children: [Text(label), Text(value.toStringAsFixed(2))],
       ),
     );
   }

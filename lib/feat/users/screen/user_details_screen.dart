@@ -5,6 +5,7 @@ import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/models/fatora.dart';
 import 'package:naji/core/models/fatora_product.dart';
 import 'package:naji/core/router/route_pages.dart';
+import 'package:naji/core/services/invoice_pdf_service.dart';
 import 'package:naji/core/services/invoice_service.dart';
 import 'package:naji/core/services/payment_service.dart';
 import 'package:naji/feat/users/controllers/user_details_controller.dart';
@@ -519,13 +520,13 @@ class _UserDetailsViewState extends State<_UserDetailsView> {
 
     final invoiceTotals = <String>[];
 
-    if (fatora.totalSy > 0) {
+    if (fatora.totalSy != 0) {
       invoiceTotals.add(
         '${fatora.totalSy.toStringAsFixed(2)} ${Currency.sy.symbol}',
       );
     }
 
-    if (fatora.totalDollar > 0) {
+    if (fatora.totalDollar != 0) {
       invoiceTotals.add(
         '${fatora.totalDollar.toStringAsFixed(2)} ${Currency.dollar.symbol}',
       );
@@ -544,6 +545,10 @@ class _UserDetailsViewState extends State<_UserDetailsView> {
         collapsedShape: const Border(),
         tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         childrenPadding: const EdgeInsets.only(bottom: 10),
+
+        // -----------------------------------------------------------------------
+        // HEADER
+        // -----------------------------------------------------------------------
         leading: Container(
           width: 40,
           height: 40,
@@ -557,18 +562,21 @@ class _UserDetailsViewState extends State<_UserDetailsView> {
             size: 21,
           ),
         ),
+
         title: Text(
           "فاتورة",
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w700,
           ),
         ),
+
         subtitle: Text(
           "${_formatDate(fatora.date)} • ${products.length} منتجات",
           style: theme.textTheme.bodySmall?.copyWith(
             color: colors.onSurfaceVariant,
           ),
         ),
+
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -584,6 +592,10 @@ class _UserDetailsViewState extends State<_UserDetailsView> {
             ),
           ],
         ),
+
+        // -----------------------------------------------------------------------
+        // CONTENT
+        // -----------------------------------------------------------------------
         children: [
           if (fatora.note != null && fatora.note!.trim().isNotEmpty)
             _buildNote(context, fatora.note!),
@@ -601,59 +613,93 @@ class _UserDetailsViewState extends State<_UserDetailsView> {
 
           const SizedBox(height: 8),
 
+          // ---------------------------------------------------------------------
+          // ACTIONS
+          // ---------------------------------------------------------------------
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
+            child: Column(
               children: [
-                Expanded(
-                  child: OutlinedButton.icon(
+                // Share
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
                     onPressed: () async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => EditInvoiceScreen(
-                            invoice: fatora,
-                            invoiceProducts: products,
-                          ),
-                        ),
-                      );
+                      try {
+                        await InvoicePdfService.shareInvoice(
+                          user: controller.user!,
+                          fatora: fatora,
+                          products: products,
+                        );
+                      } catch (e) {
+                        if (!context.mounted) return;
 
-                      if (result == true && context.mounted) {
-                        controller.load();
-                      }
-                    },
-                    icon: const Icon(Icons.edit_outlined, size: 18),
-                    label: const Text("تعديل"),
-                  ),
-                ),
-
-                const SizedBox(width: 8),
-
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: colors.error,
-                    ),
-                    onPressed: () async {
-                      final confirm = await _confirmDeleteInvoice(context);
-
-                      if (!confirm || !context.mounted) return;
-
-                      final success = await controller.deleteInvoice(
-                        fatora.unified,
-                      );
-
-                      if (success && context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("تم حذف الفاتورة بنجاح"),
-                          ),
+                          SnackBar(content: Text("تعذر مشاركة الفاتورة: $e")),
                         );
                       }
                     },
-                    icon: const Icon(Icons.delete_outline, size: 18),
-                    label: const Text("حذف"),
+                    icon: const Icon(Icons.picture_as_pdf_outlined, size: 19),
+                    label: const Text("مشاركة الفاتورة PDF"),
                   ),
+                ),
+
+                const SizedBox(height: 8),
+
+                // Edit + Delete
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => EditInvoiceScreen(
+                                invoice: fatora,
+                                invoiceProducts: products,
+                              ),
+                            ),
+                          );
+
+                          if (result == true && context.mounted) {
+                            controller.load();
+                          }
+                        },
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        label: const Text("تعديل"),
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: colors.error,
+                        ),
+                        onPressed: () async {
+                          final confirm = await _confirmDeleteInvoice(context);
+
+                          if (!confirm || !context.mounted) return;
+
+                          final success = await controller.deleteInvoice(
+                            fatora.unified,
+                          );
+
+                          if (success && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("تم حذف الفاتورة بنجاح"),
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.delete_outline, size: 18),
+                        label: const Text("حذف"),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

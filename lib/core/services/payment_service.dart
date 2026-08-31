@@ -19,14 +19,15 @@ class PaymentService {
 
   Future<void> createPayment(Payment payment) async {
     await _transactionService.runTransaction((txn) async {
-      await _paymentRepository.create(
-        payment.copyWith(status: Status.notScheduled),
-        txn,
-      );
+      final newPayment = payment.copyWith(status: Status.notScheduled);
+
+      await _paymentRepository.create(newPayment, txn);
+
+      // Payment decreases the user's balance.
       await _userRepository.changeBalance(
-        payment.userUnified,
-        -payment.amount,
-        payment.currency,
+        newPayment.userUnified,
+        -newPayment.amount,
+        newPayment.currency,
         txn,
       );
     });
@@ -35,32 +36,83 @@ class PaymentService {
   Future<void> updatePayment(Payment payment) async {
     await _transactionService.runTransaction((txn) async {
       final old = await _paymentRepository.get(payment.unified, txn);
+
       if (old == null) return;
 
-      if (DateTime.fromMillisecondsSinceEpoch(
-        int.parse(payment.updatedAt.toString()),
-      ).isAfter(DateTime.fromMillisecondsSinceEpoch(old.updatedAt))) {
-        await _paymentRepository.update(
-          payment.copyWith(status: Status.notScheduled),
-          txn,
-        );
+      // Ignore an older update.
+      if (payment.updatedAt <= old.updatedAt) {
+        return;
       }
-    });
-  }
 
-  Future<void> deletePayment(String unified) async {
-    await _transactionService.runTransaction((txn) async {
-      final old = await _paymentRepository.get(unified, txn);
-      if (old == null) return;
-      final updated = old.copyWith(status: Status.notScheduled);
-      await _paymentRepository.update(updated, txn);
-      await _paymentRepository.delete(unified, txn);
+      /*
+       * First undo the effect of the OLD payment.
+       *
+       * createPayment() subtracts the payment amount from
+       * the user's balance, so here we add it back.
+       */
       await _userRepository.changeBalance(
         old.userUnified,
         old.amount,
         old.currency,
         txn,
       );
+
+      /*
+       * Then apply the NEW payment.
+       *
+       * This subtracts the new amount using the NEW currency.
+       *
+       * This is important when, for example:
+       *
+       * OLD: 100,000 SY
+       * NEW: 100 USD
+       *
+       * The old 100,000 SY is restored and 100 USD is deducted.
+       */
+      await _userRepository.changeBalance(
+        payment.userUnified,
+        -payment.amount,
+        payment.currency,
+        txn,
+      );
+
+      /*
+       * Save the updated payment and mark it as not scheduled
+       * because it needs to be synchronized again.
+       */
+      await _paymentRepository.update(
+        payment.copyWith(status: Status.notScheduled),
+        txn,
+      );
+    });
+  }
+
+  Future<void> deletePayment(String unified) async {
+    await _transactionService.runTransaction((txn) async {
+      final old = await _paymentRepository.get(unified, txn);
+
+      if (old == null) return;
+
+      /*
+       * The payment originally decreased the balance,
+       * so deleting it restores the amount.
+       */
+      await _userRepository.changeBalance(
+        old.userUnified,
+        old.amount,
+        old.currency,
+        txn,
+      );
+
+      /*
+       * Mark it as not scheduled before deleting if this is
+       * part of your sync strategy.
+       */
+      final updated = old.copyWith(status: Status.notScheduled);
+
+      await _paymentRepository.update(updated, txn);
+
+      await _paymentRepository.delete(unified, txn);
     });
   }
 
