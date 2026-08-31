@@ -20,16 +20,16 @@ class _HomeView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('الرئيسية'),
-        actions: [
-          IconButton(
-            tooltip: 'تحديث',
-            onPressed: context.read<HomeController>().loadData,
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
+      // appBar: AppBar(
+      //   title: const Text('الرئيسية'),
+      //   actions: [
+      //     IconButton(
+      //       tooltip: 'تحديث',
+      //       onPressed: context.read<HomeController>().loadData,
+      //       icon: const Icon(Icons.refresh),
+      //     ),
+      //   ],
+      // ),
       body: const _HomeBody(),
     );
   }

@@ -46,8 +46,8 @@ class _ShellNavigationState extends State<ShellNavigation> {
         return 'سجل المدفوعات';
       case 2:
         return 'المستخدمين';
-      // case 3:
-      //   return 'إدارة المنتجات';
+      case 3:
+        return 'الفواتر';
       default:
         return 'الجدولة';
     }
@@ -97,7 +97,7 @@ class AppDrawer extends StatelessWidget {
             title: const Text('الجدولة'),
             selected: navigationShell.currentIndex == 0,
             onTap: () {
-              Navigator.pop(context);
+              context.pop();
               navigationShell.goBranch(
                 0,
                 initialLocation: navigationShell.currentIndex == 0,
@@ -109,7 +109,7 @@ class AppDrawer extends StatelessWidget {
             title: const Text('سجل المدفوعات'),
             selected: navigationShell.currentIndex == 1,
             onTap: () {
-              Navigator.pop(context);
+              context.pop();
               navigationShell.goBranch(
                 1,
                 initialLocation: navigationShell.currentIndex == 1,
@@ -118,10 +118,10 @@ class AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.person),
-            title: const Text('المستخدمين'),
+            title: const Text('الفواتير'),
             selected: navigationShell.currentIndex == 2,
             onTap: () {
-              Navigator.pop(context);
+              context.pop();
               navigationShell.goBranch(
                 2,
                 initialLocation: navigationShell.currentIndex == 2,
@@ -129,10 +129,23 @@ class AppDrawer extends StatelessWidget {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.person),
+            title: const Text('المستخدمين'),
+            selected: navigationShell.currentIndex == 3,
+            onTap: () {
+              context.pop();
+              navigationShell.goBranch(
+                3,
+                initialLocation: navigationShell.currentIndex == 3,
+              );
+            },
+          ),
+
+          ListTile(
             leading: const Icon(Icons.stacked_bar_chart),
             title: const Text('الاحصائيات'),
             onTap: () {
-              Navigator.pop(context);
+              context.pop();
               context.push(AppRouter.statisticsPath);
             },
           ),
@@ -140,7 +153,7 @@ class AppDrawer extends StatelessWidget {
             leading: const Icon(Icons.import_export),
             title: const Text('استيراد البيانات'),
             onTap: () {
-              Navigator.pop(context);
+              context.pop();
               context.push(AppRouter.dataManagementPath);
             },
           ),
@@ -168,11 +181,11 @@ class BottomNavigationWidget extends StatelessWidget {
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'الجدولة'),
         BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'الدفعات'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.receipt_rounded),
+          label: 'الفواتير',
+        ),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'المستخدمين'),
-        // BottomNavigationBarItem(
-        //   icon: Icon(Icons.shopping_cart_outlined),
-        //   label: 'المنتجات',
-        // ),
       ],
       onTap: onTap,
     );

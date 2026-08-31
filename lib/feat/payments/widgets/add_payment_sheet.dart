@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naji/core/models/currency.dart';
 import 'package:naji/feat/payments/controller/payment_controller.dart';
 
@@ -46,7 +47,7 @@ class AddPaymentSheetState extends State<AddPaymentSheet> {
     if (!mounted) return;
 
     if (success) {
-      Navigator.pop(context, true);
+      context.pop(true);
       return;
     }
 
@@ -113,7 +114,7 @@ class AddPaymentSheetState extends State<AddPaymentSheet> {
                   ),
 
                   IconButton(
-                    onPressed: _saving ? null : () => Navigator.pop(context),
+                    onPressed: _saving ? null : () => context.pop(),
                     icon: const Icon(Icons.close_rounded),
                   ),
                 ],

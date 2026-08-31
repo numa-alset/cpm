@@ -64,12 +64,12 @@ class _UserDetailsViewState extends State<_UserDetailsView> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(dialogContext, false),
+                onPressed: () => dialogContext.pop(false),
                 child: const Text("إلغاء"),
               ),
               FilledButton(
                 style: FilledButton.styleFrom(backgroundColor: Colors.red),
-                onPressed: () => Navigator.pop(dialogContext, true),
+                onPressed: () => dialogContext.pop(true),
                 child: const Text("حذف"),
               ),
             ],
@@ -88,12 +88,12 @@ class _UserDetailsViewState extends State<_UserDetailsView> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(dialogContext, false),
+                onPressed: () => dialogContext.pop(false),
                 child: const Text("إلغاء"),
               ),
               FilledButton(
                 style: FilledButton.styleFrom(backgroundColor: Colors.red),
-                onPressed: () => Navigator.pop(dialogContext, true),
+                onPressed: () => dialogContext.pop(true),
                 child: const Text("حذف"),
               ),
             ],
@@ -1098,7 +1098,7 @@ class _UserDetailsViewState extends State<_UserDetailsView> {
                 subtitle: "تسجيل فاتورة ومنتجاتها",
                 color: Theme.of(context).colorScheme.primary,
                 onTap: () async {
-                  Navigator.pop(sheetContext);
+                  sheetContext.pop();
 
                   final result = await context.push<bool>(
                     AppRouter.addInvoicePath,
@@ -1120,7 +1120,7 @@ class _UserDetailsViewState extends State<_UserDetailsView> {
                 subtitle: "تسجيل دفعة من المستخدم",
                 color: Theme.of(context).colorScheme.tertiary,
                 onTap: () async {
-                  Navigator.pop(sheetContext);
+                  sheetContext.pop();
 
                   final result = await context.push<bool>(
                     AppRouter.addPaymentPath,

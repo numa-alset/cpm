@@ -4,6 +4,7 @@ import 'package:naji/core/router/route_pages.dart';
 import 'package:naji/core/services/device_service.dart';
 import 'package:naji/feat/data_management/screen/data_management_screen.dart';
 import 'package:naji/feat/home/screen/home_screen.dart';
+import 'package:naji/feat/invoices/screen/invoices_screen.dart';
 import 'package:naji/feat/payments/screen/payments_screen.dart';
 import 'package:naji/feat/register_screen.dart';
 import 'package:naji/feat/splash_screen.dart';
@@ -51,6 +52,12 @@ final router = GoRouter(
       },
     ),
     GoRoute(
+      path: AppRouter.fatoraPath,
+      builder: (context, state) {
+        return InvoicesScreen();
+      },
+    ),
+    GoRoute(
       path: AppRouter.addPaymentPath,
       builder: (context, state) {
         final userUuid = state.extra as String;
@@ -92,6 +99,16 @@ final router = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
+              path: AppRouter.productsPath,
+              builder: (context, state) {
+                return InvoicesScreen();
+              },
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
               path: AppRouter.usersPath,
               builder: (context, state) {
                 return UsersScreen();
@@ -99,16 +116,6 @@ final router = GoRouter(
             ),
           ],
         ),
-        // StatefulShellBranch(
-        //   routes: [
-        //     GoRoute(
-        //       path: AppRouter.productsPath,
-        //       builder: (context, state) {
-        //         return StatisticsScreen();
-        //       },
-        //     ),
-        //   ],
-        // ),
       ],
     ),
   ],

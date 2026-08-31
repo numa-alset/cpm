@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/models/fatora.dart';
 import 'package:naji/core/models/fatora_product.dart';
@@ -56,11 +57,13 @@ class _EditInvoiceViewState extends State<_EditInvoiceView> {
           backgroundColor: Colors.green,
         ),
       );
-      Navigator.pop(context, true);
+      context.pop(true);
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(context.read<EditInvoiceController>().error ?? "حدث خطأ"),
+          content: Text(
+            context.read<EditInvoiceController>().error ?? "حدث خطأ",
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -90,10 +93,7 @@ class _EditInvoiceViewState extends State<_EditInvoiceView> {
     final controller = context.watch<EditInvoiceController>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("تحديث الفاتورة"),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text("تحديث الفاتورة"), centerTitle: true),
       body: controller.isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -135,21 +135,33 @@ class _EditInvoiceViewState extends State<_EditInvoiceView> {
                     const SizedBox(height: 16),
                     const Text(
                       "اسم الكاتب",
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    TextFormField(
-                      controller: controller.writerController,
+                    DropdownButtonFormField<String>(
+                      initialValue: controller.writerController.text.isEmpty
+                          ? null
+                          : controller.writerController.text,
                       decoration: InputDecoration(
-                        hintText: "أدخل اسم الكاتب",
-                        prefixIcon: const Icon(Icons.person, color: Colors.blue),
+                        labelText: "الموزع",
+                        prefixIcon: const Icon(Icons.person_outline),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
+                      items: const [
+                        DropdownMenuItem(value: "رافي", child: Text("رافي")),
+                        DropdownMenuItem(value: "ناجي", child: Text("ناجي")),
+                      ],
+                      onChanged: (value) {
+                        controller.writerController.text = value ?? '';
+                      },
                       validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return "الرجاء إدخال اسم الكاتب";
+                        if (value == null || value.isEmpty) {
+                          return "مطلوب";
                         }
                         return null;
                       },
@@ -157,7 +169,10 @@ class _EditInvoiceViewState extends State<_EditInvoiceView> {
                     const SizedBox(height: 16),
                     const Text(
                       "التاريخ",
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     InkWell(
@@ -174,14 +189,20 @@ class _EditInvoiceViewState extends State<_EditInvoiceView> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.calendar_today, color: Colors.blue),
+                            const Icon(
+                              Icons.calendar_today,
+                              color: Colors.blue,
+                            ),
                             const SizedBox(width: 12),
                             Text(
                               _formatDate(controller.selectedDate),
                               style: const TextStyle(fontSize: 16),
                             ),
                             const Spacer(),
-                            const Icon(Icons.arrow_drop_down, color: Colors.grey),
+                            const Icon(
+                              Icons.arrow_drop_down,
+                              color: Colors.grey,
+                            ),
                           ],
                         ),
                       ),
@@ -189,7 +210,10 @@ class _EditInvoiceViewState extends State<_EditInvoiceView> {
                     const SizedBox(height: 16),
                     const Text(
                       "ملاحظات (اختياري)",
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     TextFormField(
@@ -251,7 +275,11 @@ class _EditInvoiceViewState extends State<_EditInvoiceView> {
                               ),
                             ],
                           ),
-                          Icon(Icons.receipt_long, size: 40, color: Colors.blue.shade300),
+                          Icon(
+                            Icons.receipt_long,
+                            size: 40,
+                            color: Colors.blue.shade300,
+                          ),
                         ],
                       ),
                     ),
@@ -261,7 +289,10 @@ class _EditInvoiceViewState extends State<_EditInvoiceView> {
                       children: [
                         const Text(
                           "المنتجات",
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
@@ -301,7 +332,7 @@ class _EditInvoiceViewState extends State<_EditInvoiceView> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              onPressed: () => Navigator.pop(context),
+                              onPressed: () => context.pop(),
                               icon: const Icon(Icons.close),
                               label: const Text("إلغاء"),
                             ),
@@ -395,7 +426,9 @@ class _EditInvoiceViewState extends State<_EditInvoiceView> {
                 Expanded(
                   child: TextFormField(
                     initialValue: item.price.toString(),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
                     ],
@@ -415,7 +448,9 @@ class _EditInvoiceViewState extends State<_EditInvoiceView> {
                 Expanded(
                   child: TextFormField(
                     initialValue: item.quantity.toString(),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
                     ],

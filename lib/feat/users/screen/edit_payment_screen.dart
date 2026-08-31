@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/services/payment_service.dart';
 import 'package:naji/feat/users/controllers/edit_payment_controller.dart';
@@ -38,7 +39,9 @@ class _EditPaymentViewState extends State<_EditPaymentView> {
   void initState() {
     super.initState();
     final controller = context.read<EditPaymentController>();
-    _amountController = TextEditingController(text: controller.amount.toString());
+    _amountController = TextEditingController(
+      text: controller.amount.toString(),
+    );
   }
 
   @override
@@ -65,7 +68,7 @@ class _EditPaymentViewState extends State<_EditPaymentView> {
           backgroundColor: Colors.green,
         ),
       );
-      Navigator.pop(context, true);
+      context.pop(true);
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -273,7 +276,7 @@ class _EditPaymentViewState extends State<_EditPaymentView> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              onPressed: () => Navigator.pop(context),
+                              onPressed: () => context.pop(),
                               icon: const Icon(Icons.close),
                               label: const Text("إلغاء"),
                             ),

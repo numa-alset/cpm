@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naji/core/models/payment.dart';
 import 'package:naji/core/services/payment_service.dart';
 import 'package:naji/core/services/user_service.dart';
@@ -380,7 +381,7 @@ class _PaymentsView extends StatelessWidget {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(dialogContext, false),
+                  onPressed: () => dialogContext.pop(false),
                   child: const Text("إلغاء"),
                 ),
                 FilledButton(
@@ -388,7 +389,7 @@ class _PaymentsView extends StatelessWidget {
                     backgroundColor: colors.error,
                     foregroundColor: colors.onError,
                   ),
-                  onPressed: () => Navigator.pop(dialogContext, true),
+                  onPressed: () => dialogContext.pop(true),
                   child: const Text("حذف"),
                 ),
               ],

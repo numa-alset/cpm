@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naji/core/models/enum_status.dart';
 import 'package:naji/core/models/user.dart';
 import 'package:naji/feat/users/controllers/users_controller.dart';
@@ -106,7 +107,7 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
       if (!mounted) return;
 
       if (success) {
-        Navigator.of(context).pop(true);
+        context.pop(true);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(controller.error ?? "حدث خطأ غير متوقع")),
@@ -196,7 +197,7 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
 
                     IconButton(
                       tooltip: "إغلاق",
-                      onPressed: _saving ? null : () => Navigator.pop(context),
+                      onPressed: _saving ? null : () => context.pop(),
                       icon: const Icon(Icons.close_rounded),
                     ),
                   ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/models/user.dart';
 
@@ -45,7 +46,7 @@ Future<bool?> showDeleteUserDialog(BuildContext context, User user) {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(dialogContext, false),
+          onPressed: () => dialogContext.pop(false),
           child: const Text("إلغاء"),
         ),
         FilledButton.icon(
@@ -55,7 +56,7 @@ Future<bool?> showDeleteUserDialog(BuildContext context, User user) {
           ),
           icon: const Icon(Icons.delete),
           label: const Text("حذف"),
-          onPressed: () => Navigator.pop(dialogContext, true),
+          onPressed: () => dialogContext.pop(true),
         ),
       ],
     ),

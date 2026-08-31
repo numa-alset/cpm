@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/services/payment_service.dart';
 import 'package:naji/feat/users/controllers/add_payment_controller.dart';
@@ -59,7 +60,7 @@ class _AddPaymentViewState extends State<_AddPaymentView> {
         ),
       );
       // Pass 'true' back so the previous screen knows to refresh the data
-      Navigator.pop(context, true);
+      context.pop(true);
     }
   }
 
