@@ -34,7 +34,7 @@ abstract class BaseModel {
 
   Map<String, dynamic> baseMap() {
     return {
-      if (id != null) "id": id,
+      // removed id
       "unified": unified,
       "createdAt": createdAt,
       "updatedAt": updatedAt,
