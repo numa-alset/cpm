@@ -1,4 +1,3 @@
-import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/models/enum_status.dart';
 import 'package:naji/core/services/id_service.dart';
 import 'package:sqflite/sqflite.dart';
@@ -7,19 +6,16 @@ import '../models/fatora.dart';
 import '../models/fatora_product.dart';
 import '../repositories/fatora_product_repository.dart';
 import '../repositories/fatora_repository.dart';
-import '../repositories/user_repository.dart';
 import 'transaction_service.dart';
 
 class InvoiceService {
   final FatoraRepository _fatoraRepository;
   final FatoraProductRepository _fatoraProductRepository;
-  final UserRepository _userRepository;
   final TransactionService _transactionService;
 
   InvoiceService(
     this._fatoraRepository,
     this._fatoraProductRepository,
-    this._userRepository,
     this._transactionService,
   );
 
@@ -42,26 +38,6 @@ class InvoiceService {
         );
         await _fatoraProductRepository.create(item, txn);
       }
-
-      final syTotal = items
-          .where((item) => item.currency == Currency.sy)
-          .fold<double>(0, (sum, item) => sum + item.total);
-      final dollarTotal = items
-          .where((item) => item.currency == Currency.dollar)
-          .fold<double>(0, (sum, item) => sum + item.total);
-
-      await _userRepository.changeBalance(
-        fatora.userUnified,
-        syTotal,
-        Currency.sy,
-        txn,
-      );
-      await _userRepository.changeBalance(
-        fatora.userUnified,
-        dollarTotal,
-        Currency.dollar,
-        txn,
-      );
     });
   }
 
@@ -74,24 +50,6 @@ class InvoiceService {
 
       final oldItems = await _fatoraProductRepository.getByInvoice(
         fatora.unified,
-        txn,
-      );
-      final oldSyTotal = oldItems
-          .where((item) => item.currency == Currency.sy)
-          .fold<double>(0, (sum, item) => sum + item.total);
-      final oldDollarTotal = oldItems
-          .where((item) => item.currency == Currency.dollar)
-          .fold<double>(0, (sum, item) => sum + item.total);
-      await _userRepository.changeBalance(
-        oldFatora.userUnified,
-        -oldSyTotal,
-        Currency.sy,
-        txn,
-      );
-      await _userRepository.changeBalance(
-        oldFatora.userUnified,
-        -oldDollarTotal,
-        Currency.dollar,
         txn,
       );
 
@@ -121,25 +79,6 @@ class InvoiceService {
           txn,
         );
       }
-
-      final newSyTotal = items
-          .where((item) => item.currency == Currency.sy)
-          .fold<double>(0, (sum, item) => sum + item.total);
-      final newDollarTotal = items
-          .where((item) => item.currency == Currency.dollar)
-          .fold<double>(0, (sum, item) => sum + item.total);
-      await _userRepository.changeBalance(
-        fatora.userUnified,
-        newSyTotal,
-        Currency.sy,
-        txn,
-      );
-      await _userRepository.changeBalance(
-        fatora.userUnified,
-        newDollarTotal,
-        Currency.dollar,
-        txn,
-      );
     });
   }
 
@@ -151,24 +90,6 @@ class InvoiceService {
       }
 
       final items = await _fatoraProductRepository.getByInvoice(unified, txn);
-      final syTotal = items
-          .where((item) => item.currency == Currency.sy)
-          .fold<double>(0, (sum, item) => sum + item.total);
-      final dollarTotal = items
-          .where((item) => item.currency == Currency.dollar)
-          .fold<double>(0, (sum, item) => sum + item.total);
-      await _userRepository.changeBalance(
-        fatora.userUnified,
-        -syTotal,
-        Currency.sy,
-        txn,
-      );
-      await _userRepository.changeBalance(
-        fatora.userUnified,
-        -dollarTotal,
-        Currency.dollar,
-        txn,
-      );
 
       await _fatoraRepository.update(
         fatora.copyWith(status: Status.notScheduled),

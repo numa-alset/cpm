@@ -106,7 +106,7 @@ class PaymentsController extends ChangeNotifier {
         updatedAt: now,
         status: Status.notScheduled,
         currency: currency,
-        deviceId: DeviceService.deviceIdKey,
+        deviceId: await DeviceService().getDeviceId(),
       );
 
       await _paymentService.createPayment(payment);

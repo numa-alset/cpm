@@ -266,24 +266,6 @@ class HomeController extends ChangeNotifier {
       details.add(SyncDetail(label: 'الموقع', value: user.location));
     }
 
-    if (user.totalSy != 0) {
-      details.add(
-        SyncDetail(
-          label: 'الرصيد السوري',
-          value: _formatMoney(user.totalSy, Currency.sy),
-        ),
-      );
-    }
-
-    if (user.totalDollar != 0) {
-      details.add(
-        SyncDetail(
-          label: 'الرصيد بالدولار',
-          value: _formatMoney(user.totalDollar, Currency.dollar),
-        ),
-      );
-    }
-
     return details;
   }
 

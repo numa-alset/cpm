@@ -75,7 +75,6 @@ Future<void> setupLocator() async {
     () => InvoiceService(
       getIt<FatoraRepository>(),
       getIt<FatoraProductRepository>(),
-      getIt<UserRepository>(),
       getIt<TransactionService>(),
     ),
   );
@@ -85,7 +84,6 @@ Future<void> setupLocator() async {
   getIt.registerLazySingleton(
     () => PaymentService(
       getIt<PaymentRepository>(),
-      getIt<UserRepository>(),
       getIt<TransactionService>(),
     ),
   );

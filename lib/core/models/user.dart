@@ -5,16 +5,12 @@ import 'base_model.dart';
 class User extends BaseModel {
   final String name;
   final String location;
-  final double totalSy;
-  final double totalDollar;
 
   const User({
     super.id,
     required super.unified,
     required this.name,
     required this.location,
-    required this.totalSy,
-    required this.totalDollar,
     required super.createdAt,
     required super.updatedAt,
     super.deletedAt,
@@ -27,8 +23,6 @@ class User extends BaseModel {
     String? unified,
     String? name,
     String? location,
-    double? totalSy,
-    double? totalDollar,
     int? createdAt,
     int? updatedAt,
     int? deletedAt,
@@ -41,8 +35,6 @@ class User extends BaseModel {
       unified: unified ?? this.unified,
       name: name ?? this.name,
       location: location ?? this.location,
-      totalSy: totalSy ?? this.totalSy,
-      totalDollar: totalDollar ?? this.totalDollar,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
@@ -56,8 +48,6 @@ class User extends BaseModel {
       ...baseMap(),
       "name": name,
       "location": location,
-      "totalSy": totalSy,
-      "totalDollar": totalDollar,
     };
   }
 
@@ -67,8 +57,6 @@ class User extends BaseModel {
       unified: map["unified"] as String,
       name: map["name"] as String,
       location: map["location"] as String,
-      totalSy: (map["totalSy"] as num?)?.toDouble() ?? 0.0,
-      totalDollar: (map["totalDollar"] as num?)?.toDouble() ?? 0.0,
       createdAt: map["createdAt"] as int,
       updatedAt: map["updatedAt"] as int,
       deletedAt: map["deletedAt"] as int?,

@@ -69,12 +69,14 @@ class EditInvoiceController extends ChangeNotifier {
 
     // Convert existing products to drafts
     items = invoiceProducts
-        .map((product) => InvoiceItemDraft(
-              name: product.productName,
-              price: product.price,
-              quantity: product.quantity,
-              currency: product.currency,
-            ))
+        .map(
+          (product) => InvoiceItemDraft(
+            name: product.productName,
+            price: product.price,
+            quantity: product.quantity,
+            currency: product.currency,
+          ),
+        )
         .toList();
 
     if (items.isEmpty) {
@@ -154,12 +156,14 @@ class EditInvoiceController extends ChangeNotifier {
         date: selectedDate.millisecondsSinceEpoch,
         totalSy: totalSy,
         totalDollar: totalDollar,
-        note: noteController.text.trim().isEmpty ? null : noteController.text.trim(),
+        note: noteController.text.trim().isEmpty
+            ? null
+            : noteController.text.trim(),
         updatedAt: DateTime.now().millisecondsSinceEpoch,
       );
 
       // Create updated FatoraProducts
-      final fatoraProducts = items.map((item) {
+      final fatoraProducts = items.map((item) async {
         return FatoraProduct(
           unified: IdService.generate(),
           fatoraUnified: updatedFatora.unified,
@@ -169,12 +173,15 @@ class EditInvoiceController extends ChangeNotifier {
           currency: item.currency,
           createdAt: DateTime.now().millisecondsSinceEpoch,
           updatedAt: DateTime.now().millisecondsSinceEpoch,
-          deviceId: DeviceService.deviceIdKey,
+          deviceId: await DeviceService().getDeviceId(),
           status: Status.notScheduled,
         );
       }).toList();
 
-      await _invoiceService.updateInvoice(updatedFatora, fatoraProducts);
+      await _invoiceService.updateInvoice(
+        updatedFatora,
+        await Future.wait(fatoraProducts),
+      );
 
       isLoading = false;
       notifyListeners();

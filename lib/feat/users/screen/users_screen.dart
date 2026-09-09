@@ -8,6 +8,7 @@ import 'package:naji/feat/users/widget/user_form_bottom_sheet.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/models/user.dart';
+import '../../../core/models/user_balance.dart';
 import '../controllers/users_controller.dart';
 
 class UsersScreen extends StatelessWidget {
@@ -151,8 +152,12 @@ class _UsersView extends StatelessWidget {
     UsersController controller,
     User user,
   ) {
+    final balance = controller.balances[user.unified] ?? 
+        const UserBalance(sy: 0.0, dollar: 0.0);
+    
     return UserCard(
       user: user,
+      balance: balance,
 
       onTap: () {
         context.push(AppRouter.userDetailsPath, extra: user.unified);
@@ -380,7 +385,8 @@ class _UsersView extends StatelessWidget {
     UsersController controller,
     User user,
   ) async {
-    final delete = await showDeleteUserDialog(context, user);
+    final balance = controller.balances[user.unified];
+    final delete = await showDeleteUserDialog(context, user, balance: balance);
 
     if (delete != true || !context.mounted) {
       return;

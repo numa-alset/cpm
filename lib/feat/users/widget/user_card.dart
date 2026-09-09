@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/models/user.dart';
+import '../../../../core/models/user_balance.dart';
 
 class UserCard extends StatelessWidget {
   final User user;
+  final UserBalance balance;
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
@@ -11,6 +13,7 @@ class UserCard extends StatelessWidget {
   const UserCard({
     super.key,
     required this.user,
+    required this.balance,
     this.onTap,
     this.onEdit,
     this.onDelete,
@@ -21,8 +24,8 @@ class UserCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    final syNegative = user.totalSy < 0;
-    final dollarNegative = user.totalDollar < 0;
+    final syNegative = balance.sy < 0;
+    final dollarNegative = balance.dollar < 0;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -164,7 +167,7 @@ class UserCard extends StatelessWidget {
                   Expanded(
                     child: _BalanceItem(
                       title: "الليرة السورية",
-                      amount: user.totalSy,
+                      amount: balance.sy,
                       symbol: "ل.س",
                       icon: Icons.account_balance_wallet_outlined,
                       negative: syNegative,
@@ -176,7 +179,7 @@ class UserCard extends StatelessWidget {
                   Expanded(
                     child: _BalanceItem(
                       title: "الدولار",
-                      amount: user.totalDollar,
+                      amount: balance.dollar,
                       symbol: "\$",
                       icon: Icons.attach_money_rounded,
                       negative: dollarNegative,

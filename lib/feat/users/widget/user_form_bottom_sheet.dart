@@ -19,8 +19,6 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
 
   late final TextEditingController _nameController;
   late final TextEditingController _locationController;
-  late final TextEditingController _totalSyController;
-  late final TextEditingController _totalDollarController;
 
   bool _saving = false;
 
@@ -35,22 +33,12 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
     _nameController = TextEditingController(text: user?.name ?? '');
 
     _locationController = TextEditingController(text: user?.location ?? '');
-
-    _totalSyController = TextEditingController(
-      text: user != null ? user.totalSy.toStringAsFixed(2) : '0',
-    );
-
-    _totalDollarController = TextEditingController(
-      text: user != null ? user.totalDollar.toStringAsFixed(2) : '0',
-    );
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _locationController.dispose();
-    _totalSyController.dispose();
-    _totalDollarController.dispose();
     super.dispose();
   }
 
@@ -65,11 +53,6 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
       _saving = true;
     });
 
-    final totalSy = double.tryParse(_totalSyController.text.trim()) ?? 0;
-
-    final totalDollar =
-        double.tryParse(_totalDollarController.text.trim()) ?? 0;
-
     final controller = widget.controller;
 
     try {
@@ -79,8 +62,6 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
         final updatedUser = widget.user!.copyWith(
           name: _nameController.text.trim(),
           location: _locationController.text.trim(),
-          totalSy: totalSy,
-          totalDollar: totalDollar,
           updatedAt: DateTime.now().millisecondsSinceEpoch,
           status: Status.notScheduled,
         );
@@ -93,8 +74,6 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
           unified: '',
           name: _nameController.text.trim(),
           location: _locationController.text.trim(),
-          totalSy: totalSy,
-          totalDollar: totalDollar,
           createdAt: now,
           updatedAt: now,
           deviceId: '',
@@ -185,8 +164,8 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
 
                           Text(
                             isEdit
-                                ? "تعديل بيانات المستخدم وأرصدته"
-                                : "أدخل بيانات المستخدم والأرصدة الافتتاحية",
+                                ? "تعديل بيانات المستخدم"
+                                : "أدخل بيانات المستخدم",
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: colors.onSurfaceVariant,
                             ),
@@ -261,55 +240,6 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
 
                     return null;
                   },
-                ),
-
-                const SizedBox(height: 28),
-
-                // -------------------------------------------------------------
-                // BALANCES
-                // -------------------------------------------------------------
-                _buildSectionTitle(
-                  context,
-                  icon: Icons.account_balance_wallet_outlined,
-                  title: "الأرصدة الافتتاحية",
-                ),
-
-                const SizedBox(height: 6),
-
-                Text(
-                  "يمكن للمستخدم امتلاك رصيد مستقل بكل عملة.",
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: _buildCurrencyField(
-                        context,
-                        controller: _totalSyController,
-                        label: "الليرة السورية",
-                        symbol: "ل.س",
-                        icon: Icons.account_balance_wallet_outlined,
-                      ),
-                    ),
-
-                    const SizedBox(width: 10),
-
-                    Expanded(
-                      child: _buildCurrencyField(
-                        context,
-                        controller: _totalDollarController,
-                        label: "الدولار",
-                        symbol: "\$",
-                        icon: Icons.attach_money_rounded,
-                      ),
-                    ),
-                  ],
                 ),
 
                 const SizedBox(height: 28),
@@ -421,108 +351,6 @@ class _UserFormBottomSheetState extends State<UserFormBottomSheet> {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(color: colors.primary, width: 1.5),
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // CURRENCY FIELD
-  // ---------------------------------------------------------------------------
-
-  Widget _buildCurrencyField(
-    BuildContext context, {
-    required TextEditingController controller,
-    required String label,
-    required String symbol,
-    required IconData icon,
-  }) {
-    final colors = Theme.of(context).colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: colors.primaryContainer,
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Icon(icon, size: 17, color: colors.onPrimaryContainer),
-              ),
-
-              const SizedBox(width: 7),
-
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 8),
-
-          TextFormField(
-            controller: controller,
-            enabled: !_saving,
-            keyboardType: const TextInputType.numberWithOptions(
-              decimal: true,
-              signed: true,
-            ),
-            textAlign: TextAlign.start,
-            decoration: InputDecoration(
-              hintText: "0.00",
-              suffixText: symbol,
-              filled: true,
-              fillColor: colors.surface,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 11,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(11),
-                borderSide: BorderSide(color: colors.outlineVariant),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(11),
-                borderSide: BorderSide(color: colors.outlineVariant),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(11),
-                borderSide: BorderSide(color: colors.primary, width: 1.5),
-              ),
-            ),
-            validator: (value) {
-              final trimmed = value?.trim();
-
-              if (trimmed == null || trimmed.isEmpty) {
-                return "مطلوب";
-              }
-
-              if (double.tryParse(trimmed) == null) {
-                return "غير صحيح";
-              }
-
-              return null;
-            },
-          ),
-        ],
       ),
     );
   }

@@ -21,13 +21,20 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onConfigure: _onConfigure,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+      onOpen: _onOpen,
     );
   }
 
   Future<void> _onConfigure(Database db) async {
+    await db.execute("PRAGMA foreign_keys = OFF;");
+  }
+
+  Future<void> _onOpen(Database db) async {
+    // Re-enable foreign keys after migrations are complete
     await db.execute("PRAGMA foreign_keys = ON;");
   }
 
@@ -43,8 +50,6 @@ CREATE TABLE users(
 
     name TEXT NOT NULL,
     location TEXT NOT NULL,
-    totalSy REAL NOT NULL DEFAULT 0,
-    totalDollar REAL NOT NULL DEFAULT 0,
 
     createdAt INTEGER NOT NULL,
     updatedAt INTEGER NOT NULL,
@@ -181,6 +186,52 @@ ON DELETE RESTRICT
     await db.execute("CREATE INDEX idx_payment_user ON payments(userUnified);");
 
     await db.execute("CREATE INDEX idx_payment_date ON payments(date);");
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // 1. Create a new temporary table WITHOUT totalSy and totalDollar
+      await db.execute("""
+        CREATE TABLE users_new(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            unified TEXT NOT NULL UNIQUE,
+            name TEXT NOT NULL,
+            location TEXT NOT NULL,
+            createdAt INTEGER NOT NULL,
+            updatedAt INTEGER NOT NULL,
+            deletedAt INTEGER,
+            deviceId TEXT NOT NULL,
+            status TEXT NOT NULL
+        );
+      """);
+
+      // 2. Copy the data from the old table to the new table
+      await db.execute("""
+        INSERT INTO users_new (id, unified, name, location, createdAt, updatedAt, deletedAt, deviceId, status)
+        SELECT id, unified, name, location, createdAt, updatedAt, deletedAt, deviceId, status
+        FROM users;
+      """);
+
+      // 3. Drop the old table
+      await db.execute('DROP TABLE users;');
+
+      // 4. Rename the new table to the original name
+      await db.execute('ALTER TABLE users_new RENAME TO users;');
+
+      // 5. Recreate the index for the users table since dropping it deleted the old index
+      await db.execute("CREATE INDEX idx_users_unified ON users(unified);");
+
+      // 6. Execute your new indexes
+      await db.execute(
+        'CREATE INDEX idx_fatoras_user_deleted '
+        'ON fatoras(userUnified, deletedAt);',
+      );
+
+      await db.execute(
+        'CREATE INDEX idx_payments_user_currency_deleted '
+        'ON payments(userUnified, currency, deletedAt);',
+      );
+    }
   }
 
   Future<void> close() async {

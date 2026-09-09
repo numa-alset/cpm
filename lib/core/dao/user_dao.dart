@@ -1,4 +1,3 @@
-import 'package:naji/core/models/currency.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../database/user_db.dart';
@@ -51,23 +50,6 @@ class UserDAO extends BaseDAO<User> {
       (users) => users.any((user) => user.name == keyword),
     );
     return filtered;
-  }
-
-  Future<int> updateBalance(
-    String unified,
-    double total,
-    Currency currency,
-    Transaction txn,
-  ) {
-    return userDB.get(unified, txn).then((user) {
-      if (user != null) {
-        final updatedUser = currency == Currency.sy
-            ? user.copyWith(totalSy: user.totalSy + total)
-            : user.copyWith(totalDollar: user.totalDollar + total);
-        return userDB.update(updatedUser, txn);
-      }
-      return 0;
-    });
   }
 
   @override

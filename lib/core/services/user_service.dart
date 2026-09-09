@@ -1,5 +1,5 @@
-import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/models/enum_status.dart';
+import 'package:naji/core/models/user_balance.dart';
 import 'package:naji/core/services/device_service.dart';
 import 'package:naji/core/services/id_service.dart';
 import 'package:sqflite/sqflite.dart';
@@ -73,27 +73,15 @@ class UserService {
     });
   }
 
-  Future<void> changeBalance(
-    String unified,
-    double total,
-    Currency currency,
-  ) async {
-    await _transactionService.runTransaction((txn) async {
-      final user = await getUser(unified);
-      if (user == null) {
-        throw Exception("User not found");
-      }
-      await _userRepository.changeBalance(unified, total, currency, txn);
-      await _userRepository.update(
-        user.copyWith(status: Status.notScheduled),
-        txn,
-      );
-    });
-  }
-
   Future<User?> getUser(String unified) async {
     return await _transactionService.runTransaction((txn) async {
       return await _userRepository.get(unified, txn);
+    });
+  }
+
+  Future<UserBalance> getUserBalance(String unified) async {
+    return await _transactionService.runTransaction((txn) async {
+      return await _userRepository.getUserBalance(unified, txn);
     });
   }
 
@@ -102,18 +90,6 @@ class UserService {
       return await _userRepository.getAll(txn);
     });
   }
-
-  // Future<List<User>> getBuyers() async {
-  //   return await _transactionService.runTransaction((txn) async {
-  //     return await _userRepository.getBuyers(txn);
-  //   });
-  // }
-  //
-  // Future<List<User>> getSellers() async {
-  //   return await _transactionService.runTransaction((txn) async {
-  //     return await _userRepository.getSellers(txn);
-  //   });
-  // }
 
   Future<List<User>> searchUsers(String keyword) async {
     return await _transactionService.runTransaction((txn) async {

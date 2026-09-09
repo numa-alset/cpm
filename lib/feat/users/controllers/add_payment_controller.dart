@@ -45,7 +45,7 @@ class AddPaymentController extends ChangeNotifier {
         currency: selectedCurrency,
         createdAt: DateTime.now().millisecondsSinceEpoch,
         updatedAt: DateTime.now().millisecondsSinceEpoch,
-        deviceId: DeviceService.deviceIdKey,
+        deviceId: await DeviceService().getDeviceId(),
         status: Status.notScheduled,
       );
 

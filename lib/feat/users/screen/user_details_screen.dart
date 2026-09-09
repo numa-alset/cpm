@@ -4,10 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/models/fatora.dart';
 import 'package:naji/core/models/fatora_product.dart';
+import 'package:naji/core/models/user_balance.dart';
 import 'package:naji/core/router/route_pages.dart';
 import 'package:naji/core/services/invoice_pdf_service.dart';
 import 'package:naji/core/services/invoice_service.dart';
 import 'package:naji/core/services/payment_service.dart';
+import 'package:naji/core/services/user_report_service.dart';
 import 'package:naji/feat/users/controllers/user_details_controller.dart';
 import 'package:naji/feat/users/screen/edit_invoice_screen.dart';
 import 'package:naji/feat/users/screen/edit_payment_screen.dart';
@@ -52,6 +54,49 @@ class _UserDetailsViewState extends State<_UserDetailsView> {
     return "${date.year}/"
         "${date.month.toString().padLeft(2, '0')}/"
         "${date.day.toString().padLeft(2, '0')}";
+  }
+
+  Future<void> _exportReport(
+    BuildContext context,
+    UserDetailsController controller, {
+    required String format,
+  }) async {
+    final user = controller.user;
+    if (user == null) return;
+
+    try {
+      if (format == 'pdf') {
+        await UserReportService.sharePdfReport(
+          user: user,
+          balance: controller.balance,
+          invoices: controller.invoices,
+          payments: controller.payments,
+        );
+      } else {
+        await UserReportService.shareExcelReport(
+          user: user,
+          balance: controller.balance,
+          invoices: controller.invoices,
+          payments: controller.payments,
+        );
+      }
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            format == 'pdf'
+                ? 'تم تجهيز تقرير PDF للمستخدم'
+                : 'تم تجهيز تقرير Excel للمستخدم',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('تعذر تصدير التقرير: $e')));
+    }
   }
 
   Future<bool> _confirmDelete(BuildContext context) async {
@@ -160,6 +205,20 @@ class _UserDetailsViewState extends State<_UserDetailsView> {
           ),
           centerTitle: true,
           elevation: 0,
+          actions: [
+            IconButton(
+              tooltip: 'تصدير PDF',
+              onPressed: () =>
+                  _exportReport(context, controller, format: 'pdf'),
+              icon: const Icon(Icons.picture_as_pdf_rounded),
+            ),
+            IconButton(
+              tooltip: 'تصدير Excel',
+              onPressed: () =>
+                  _exportReport(context, controller, format: 'excel'),
+              icon: const Icon(Icons.table_view_rounded),
+            ),
+          ],
         ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _showAddOptions(context, user),
@@ -170,7 +229,7 @@ class _UserDetailsViewState extends State<_UserDetailsView> {
           onRefresh: controller.load,
           child: Column(
             children: [
-              _buildUserSummary(context, user),
+              _buildUserSummary(context, user, controller.balance),
 
               const SizedBox(height: 8),
 
@@ -195,9 +254,17 @@ class _UserDetailsViewState extends State<_UserDetailsView> {
   // USER SUMMARY
   // ---------------------------------------------------------------------------
 
-  Widget _buildUserSummary(BuildContext context, User user) {
+  Widget _buildUserSummary(
+    BuildContext context,
+    User user,
+    UserBalance? balance,
+  ) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+
+    final displayBalance = balance ?? const UserBalance(sy: 0.0, dollar: 0.0);
+    final syNegative = displayBalance.sy < 0;
+    final dollarNegative = displayBalance.dollar < 0;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
@@ -280,10 +347,10 @@ class _UserDetailsViewState extends State<_UserDetailsView> {
                     child: _buildBalanceCard(
                       context,
                       title: "الليرة السورية",
-                      amount: user.totalSy,
+                      amount: displayBalance.sy,
                       symbol: Currency.sy.symbol,
                       icon: Icons.currency_exchange_rounded,
-                      isNegative: user.totalSy < 0,
+                      isNegative: syNegative,
                     ),
                   ),
 
@@ -293,10 +360,10 @@ class _UserDetailsViewState extends State<_UserDetailsView> {
                     child: _buildBalanceCard(
                       context,
                       title: "الدولار",
-                      amount: user.totalDollar,
+                      amount: displayBalance.dollar,
                       symbol: Currency.dollar.symbol,
                       icon: Icons.attach_money_rounded,
-                      isNegative: user.totalDollar < 0,
+                      isNegative: dollarNegative,
                     ),
                   ),
                 ],

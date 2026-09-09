@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:naji/core/models/currency.dart';
 import 'package:naji/core/models/user.dart';
+import 'package:naji/core/models/user_balance.dart';
 import 'package:naji/core/services/user_service.dart';
 
 enum UsersFilter { all }
@@ -13,6 +13,7 @@ class UsersController extends ChangeNotifier {
   final TextEditingController searchController = TextEditingController();
 
   List<User> users = [];
+  Map<String, UserBalance> balances = {};
   bool loading = false;
   String? error;
   UsersFilter filter = UsersFilter.all;
@@ -36,11 +37,27 @@ class UsersController extends ChangeNotifier {
             break;
         }
       }
+
+      // Fetch balances for all users
+      await _loadBalances();
     } catch (e) {
       error = e.toString();
     } finally {
       loading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> _loadBalances() async {
+    balances.clear();
+    for (final user in users) {
+      try {
+        final balance = await _userService.getUserBalance(user.unified);
+        balances[user.unified] = balance;
+      } catch (_) {
+        // If balance calculation fails, use zero balance
+        balances[user.unified] = const UserBalance(sy: 0.0, dollar: 0.0);
+      }
     }
   }
 
@@ -105,32 +122,19 @@ class UsersController extends ChangeNotifier {
     }
   }
 
-  Future<bool> changeBalance(
-    String unified,
-    double newBalance,
-    Currency currency,
-  ) async {
-    error = null;
-    try {
-      loading = true;
-      notifyListeners();
-
-      await _userService.changeBalance(unified, newBalance, currency);
-      await load();
-      return true;
-    } catch (e) {
-      error = e.toString();
-      loading = false;
-      notifyListeners();
-      return false;
-    }
-  }
-
   Future<User?> getUser(String unified) async {
     try {
       return await _userService.getUser(unified);
     } catch (_) {
       return null;
+    }
+  }
+
+  Future<UserBalance> getUserBalance(String unified) async {
+    try {
+      return await _userService.getUserBalance(unified);
+    } catch (_) {
+      return const UserBalance(sy: 0.0, dollar: 0.0);
     }
   }
 

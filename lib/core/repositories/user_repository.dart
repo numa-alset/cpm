@@ -1,9 +1,10 @@
 import 'package:naji/core/models/currency.dart';
-import 'package:naji/core/repositories/base_repository.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../dao/user_dao.dart';
 import '../models/user.dart';
+import '../models/user_balance.dart';
+import 'base_repository.dart';
 
 class UserRepository extends BaseRepository<User> {
   final UserDAO _userDAO;
@@ -23,6 +24,8 @@ class UserRepository extends BaseRepository<User> {
   @override
   Future<User?> get(String unified, Transaction txn) =>
       _userDAO.getByUnified(unified, txn);
+
+  @override
   Future<List<User>> getAll(Transaction txn) => _userDAO.getAll(txn);
 
   Future<List<User>> search(String keyword, Transaction txn) =>
@@ -30,12 +33,58 @@ class UserRepository extends BaseRepository<User> {
   Future<bool> isExist(String keyword, Transaction txn) =>
       _userDAO.isExist(keyword, txn);
 
-  Future<int> changeBalance(
-    String unified,
-    double total,
-    Currency currency,
+  Future<UserBalance> getUserBalance(
+    String userUnified,
     Transaction txn,
-  ) => _userDAO.updateBalance(unified, total, currency, txn);
+  ) async {
+    final result = await txn.rawQuery(
+      '''
+    SELECT
+      COALESCE((
+        SELECT SUM(totalSy)
+        FROM fatoras
+        WHERE userUnified = ?
+          AND deletedAt IS NULL
+      ), 0)
+      -
+      COALESCE((
+        SELECT SUM(amount)
+        FROM payments
+        WHERE userUnified = ?
+          AND currency = '${Currency.sy.value}'
+          AND deletedAt IS NULL
+      ), 0) AS balanceSy,
+
+      COALESCE((
+        SELECT SUM(totalDollar)
+        FROM fatoras
+        WHERE userUnified = ?
+          AND deletedAt IS NULL
+      ), 0)
+      -
+      COALESCE((
+        SELECT SUM(amount)
+        FROM payments
+        WHERE userUnified = ?
+          AND currency = '${Currency.dollar.value}'
+          AND deletedAt IS NULL
+      ), 0) AS balanceDollar
+    ''',
+      [userUnified, userUnified, userUnified, userUnified],
+    );
+
+    // A SELECT with subqueries always returns 1 row, but checking is safe
+    if (result.isEmpty) {
+      return const UserBalance(sy: 0.0, dollar: 0.0);
+    }
+
+    final row = result.first;
+
+    return UserBalance(
+      sy: (row['balanceSy'] as num?)?.toDouble() ?? 0.0,
+      dollar: (row['balanceDollar'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
 
   @override
   Future<List<User>> getNotScheduled(Transaction txn) {

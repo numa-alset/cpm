@@ -136,12 +136,12 @@ class AddInvoiceController extends ChangeNotifier {
         note: note?.trim().isEmpty == true ? null : note?.trim(),
         createdAt: now,
         updatedAt: now,
-        deviceId: DeviceService.deviceIdKey,
+        deviceId: await DeviceService().getDeviceId(),
         status: Status.notScheduled,
       );
 
       // Create FatoraProducts (invoice items)
-      final fatoraProducts = items.map((item) {
+      final fatoraProducts = items.map((item) async {
         return FatoraProduct(
           unified: IdService.generate(),
           fatoraUnified: fatora.unified,
@@ -151,12 +151,15 @@ class AddInvoiceController extends ChangeNotifier {
           currency: item.currency,
           createdAt: now,
           updatedAt: now,
-          deviceId: DeviceService.deviceIdKey,
+          deviceId: await DeviceService().getDeviceId(),
           status: Status.notScheduled,
         );
       }).toList();
 
-      await _invoiceService.createInvoice(fatora, fatoraProducts);
+      await _invoiceService.createInvoice(
+        fatora,
+        await Future.wait(fatoraProducts),
+      );
 
       isLoading = false;
       notifyListeners();

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:naji/core/models/user_balance.dart';
 import 'package:naji/core/services/invoice_service.dart';
 import 'package:naji/core/services/payment_service.dart';
 import 'package:naji/core/utils/date_grouper.dart';
@@ -25,6 +26,7 @@ class UserDetailsController extends ChangeNotifier {
        _paymentService = paymentService;
 
   User? user;
+  UserBalance? balance;
   // Using Dart Records to tie the invoice and its products together
   List<(Fatora, List<FatoraProduct>)> invoices = [];
   List<Payment> payments = [];
@@ -49,11 +51,13 @@ class UserDetailsController extends ChangeNotifier {
         _userService.getUser(userUnified),
         _invoiceService.getInvoicesByUser(userUnified),
         _paymentService.getPaymentsByUser(userUnified),
+        _userService.getUserBalance(userUnified),
       ]);
 
       user = results[0] as User?;
       final rawInvoices = results[1] as List<Fatora>;
       payments = results[2] as List<Payment>;
+      balance = results[3] as UserBalance?;
 
       // 2. Fetch products for each invoice in parallel
       final invoiceProductsFutures = rawInvoices.map((fatora) async {
@@ -98,7 +102,7 @@ class UserDetailsController extends ChangeNotifier {
 
   Future<bool> deletePayment(String unified) async {
     try {
-      // 1. Delete from database (this will also update the user's balance in the DB)
+      // 1. Delete from database
       await _paymentService.deletePayment(unified);
 
       // 2. Reload all data to refresh balances and ensure consistency
