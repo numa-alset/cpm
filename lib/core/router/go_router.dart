@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:naji/core/router/route_pages.dart';
 import 'package:naji/core/services/device_service.dart';
 import 'package:naji/feat/data_management/screen/data_management_screen.dart';
+import 'package:naji/feat/error_screen.dart';
 import 'package:naji/feat/home/screen/home_screen.dart';
 import 'package:naji/feat/invoices/screen/invoices_screen.dart';
 import 'package:naji/feat/payments/screen/payments_screen.dart';
@@ -19,6 +20,17 @@ final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 final router = GoRouter(
   navigatorKey: rootNavigatorKey,
   initialLocation: AppRouter.splashPath,
+  onException: (context, state, router) {
+    final location = state.uri.toString();
+
+    // If it's a file share intent, silently go to the home screen
+    if (location.startsWith('content://') || location.startsWith('file://')) {
+      router.go(AppRouter.homePath);
+    } else {
+      // Handle actual unknown routes (e.g., show a 404 page)
+      router.go(AppRouter.errorPath);
+    }
+  },
   routes: [
     GoRoute(
       redirect: (context, state) async {
@@ -31,7 +43,17 @@ final router = GoRouter(
       path: AppRouter.splashPath,
       builder: (context, state) => SplashScreen(),
     ),
-
+    GoRoute(
+      path: AppRouter.errorPath,
+      builder: (context, state) {
+        return const ErrorScreen(
+          title: 'صفحة غير موجودة',
+          message: 'عذراً، المسار الذي تحاول الوصول إليه غير موجود.',
+          showDataManagementButton:
+              true, // Shows the "Home" button from your custom widget
+        );
+      },
+    ),
     GoRoute(
       path: AppRouter.registerPath,
       builder: (context, state) => RegisterScreen(),

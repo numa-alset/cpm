@@ -12,6 +12,7 @@ class AppRouter {
   static const String addInvoicePath = '/add_invoice';
   static const String statisticsPath = '/statistics';
   static const String dataManagementPath = '/data_management';
+  static const String errorPath = '/error';
 }
 
 class AppRouterName {
@@ -28,4 +29,5 @@ class AppRouterName {
   static const String addInvoice = 'add_invoice';
   static const String statistics = 'statistics';
   static const String dataManagement = 'data_management';
+  static const String error = 'error';
 }
